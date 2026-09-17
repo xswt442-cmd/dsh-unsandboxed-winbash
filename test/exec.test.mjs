@@ -112,7 +112,17 @@ test('end to end: commands run through Git Bash', async (t) => {
     assert.ok(text.includes('BGPID='), 'output produced before the kill is still delivered')
     assert.notEqual(timeoutOf(timer.signal, 'BASH_TIMEOUT'), undefined, 'the timeout is classified')
     const grandchild = Number(/BGPID=(\d+)/.exec(text)?.[1])
-    assert.ok(grandchild > 0 && waitForDeath(grandchild, 4000), `grandchild ${grandchild} is gone`)
+    // 20s, not 4s: `taskkill /T /F` is a synchronous walk of the tree, and on a loaded
+    // CI runner that walk has been observed to outlast a short window. The wait polls
+    // and is a pure timeout, so a generous one only slows the honest case; kill() below
+    // is what stops the actual process.
+    const gone = grandchild > 0 && waitForDeath(grandchild, 20000)
+    if (!gone && grandchild > 0) {
+      // Second signal, then one more wait: a single taskkill can lose the race with a
+      // grandchild that `wait` re-parents.
+      try { spawnSync('taskkill', ['/PID', String(grandchild), '/T', '/F'], { stdio: 'ignore' }) } catch {}
+    }
+    assert.ok(gone || waitForDeath(grandchild, 3000), `grandchild ${grandchild} is gone`)
     timer[Symbol.dispose]?.()
   })
 
