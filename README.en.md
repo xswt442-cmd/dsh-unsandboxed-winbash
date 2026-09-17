@@ -94,7 +94,7 @@ The two suites are split by whether they start a process: `test/unit.test.mjs` s
 
 `test:e2e` carries `--test-force-exit`: the last run leaves its pipe sockets and the child handle in the event loop (a killed child does not guarantee its stdio closes, the Windows behaviour this executor works around). That residue is bounded rather than a leak, and the suite asserts that four runs do not accumulate handles. Dropping the flag makes node wait out the test-runner timeout instead.
 
-This plugin is the publishable form of `../../winbash`: that private copy keeps the deployment shape and every investigation note, while this repository provides `dsh.bundle`, its own package name and the test split. The assertions are the same in both, so change them together.
+This plugin is the publishable form of `../../winbash`: that private copy keeps the deployment shape and every investigation note, while this repository provides `dsh.bundle`, its own package name and CI. The tool code and the assertions are the same in both, so change them together.
 
 ```powershell
 npm test          # pure units, also inside the sandbox
