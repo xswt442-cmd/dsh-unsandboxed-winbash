@@ -1,0 +1,11 @@
+# dsh-unsandboxed-winbash bundle patch: one loader row mounts the Git Bash tool.
+#
+# The tool id stays "winbash" on purpose: that is what the tool is called in the
+# transcript and in a session's system prompt, and renaming it would invalidate
+# every prompt and transcript that already says winbash. Only the PACKAGE is named
+# after the property that matters here (it runs outside the file sandbox).
+- insert:
+    - id: tool-winbash
+      name: dsh-unsandboxed-winbash/tool
+      config:
+        gitPathPrefix: true
