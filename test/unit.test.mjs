@@ -23,12 +23,16 @@ const CANDIDATES = [
   'C:' + B + 'Program Files' + B + 'Git' + B + 'bin' + B + 'bash.exe',
   'C:' + B + 'Program Files (x86)' + B + 'Git' + B + 'usr' + B + 'bin' + B + 'bash.exe'
 ]
+// This suite is platform-neutral on purpose: the CI unit job runs it on Linux,
+// where no Git for Windows exists. Only the assertions that need a real install are
+// skipped there, and they say so rather than failing.
 const BASH = CANDIDATES.find((candidate) => existsSync(candidate))
-assert.ok(BASH, 'no Git Bash found in the well-known locations; set nothing and install Git for Windows')
+const NO_BASH = 'Git for Windows is not installed on this host'
+const needsBash = { skip: BASH === undefined ? NO_BASH : false }
 
 const BASE_CONFIG = {
   enableRunInBackground: true,
-  bashPath: BASH,
+  bashPath: BASH ?? CANDIDATES[0],
   gitPathPrefix: true,
   extraPath: '',
   timeoutMs: 120000,
@@ -40,7 +44,7 @@ const BASE_CONFIG = {
 }
 
 const request = (command, extra = {}) => ({
-  bashPath: BASH,
+  bashPath: BASH ?? CANDIDATES[0],
   command,
   dshEnv: { DSH_SHELL: '1' },
   ...extra
@@ -56,7 +60,7 @@ test('bash discovery never falls back to a PATH lookup', () => {
   )
 })
 
-test('configured bashPath wins, and an unset one auto-discovers', { skip: process.platform !== 'win32' ? 'Git for Windows is a Windows install' : false }, () => {
+test('configured bashPath wins, and an unset one auto-discovers', needsBash, () => {
   assert.equal(resolveGitBashPath(BASH, process.env), BASH, 'an existing configured path is returned as-is')
   assert.equal(resolveGitBashPath('', process.env), BASH, 'auto-discovery finds this machine Git Bash')
 })
