@@ -11,7 +11,7 @@
 [![downloads](https://img.shields.io/npm/d18m/dsh-unsandboxed-winbash?label=downloads&logo=npm&color=cb3837)](https://www.npmjs.com/package/dsh-unsandboxed-winbash)
 [![license](https://img.shields.io/badge/license-MIT-22c55e.svg)](./LICENSE)
 
-A Git Bash (MSYS2) tool plugin for Windows. It adds one `winbash` tool that runs commands through Git for Windows bash with the MSYS PATH repaired; the command runs outside the file sandbox, which the tool description states.
+A Git Bash (MSYS2) tool plugin for Windows. It adds one `winbash` tool that runs commands through Git for Windows bash with the MSYS PATH repaired; the command runs **outside the file sandbox**, which the tool description also states.
 
 ## Why this exists
 
@@ -90,18 +90,16 @@ No other platform needs this plugin: `dsh-tool-bash` and `dsh-bash-sandbox` are 
 
 ## Development and verification
 
-The two suites are split by whether they start a process: `test/unit.test.mjs` starts none (PATH composition, environment scrubbing, the collector, the `windowsHide` regression guard) and passes inside the sandbox too, while `test/exec.test.mjs` starts real Git Bash and writes spill files, so it needs an unsandboxed shell. Both run under `node --test`, one named case per assertion, and CI runs both on `windows-latest` for Node 20, 22 and 24 — this is a Windows-only plugin, so no job targets another platform.
-
-`test:e2e` carries `--test-force-exit`: the last run leaves its pipe sockets and the child handle in the event loop (a killed child does not guarantee its stdio closes, the Windows behaviour this executor works around). That residue is bounded rather than a leak, and the suite asserts that four runs do not accumulate handles. Dropping the flag makes node wait out the test-runner timeout instead.
-
-This plugin is the publishable form of `../../winbash`: that private copy keeps the deployment shape and every investigation note, while this repository provides `dsh.bundle`, its own package name and CI. The tool code and the assertions are the same in both, so change them together.
+`test/exec.test.mjs` starts real Git Bash and writes spill files, so it needs an unsandboxed shell. After a change:
 
 ```powershell
 npm test          # pure units, also inside the sandbox
-npm run test:e2e  # starts Git Bash, needs an unsandboxed shell
+npm run test:e2e  # needs an unsandboxed shell
 npm run docs:check
 npm pack --dry-run
 ```
+
+This plugin is the publishable form of the same Git Bash tool; the private copy keeps the deployment shape and the investigation notes. The tool code and the assertions are the same in both, so change them together.
 
 ## License
 

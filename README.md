@@ -11,7 +11,7 @@
 [![downloads](https://img.shields.io/npm/d18m/dsh-unsandboxed-winbash?label=downloads&logo=npm&color=cb3837)](https://www.npmjs.com/package/dsh-unsandboxed-winbash)
 [![license](https://img.shields.io/badge/license-MIT-22c55e.svg)](./LICENSE)
 
-Windows 上的 Git Bash（MSYS2）工具插件。它向会话新增一个 `winbash` 工具，直接以 Git for Windows 的 bash 执行命令并修好 MSYS 的 PATH；命令在文件沙箱之外执行，工具描述写明了这一点。
+Windows 上的 Git Bash（MSYS2）工具插件。它向会话新增一个 `winbash` 工具，直接以 Git for Windows 的 bash 执行命令并修好 MSYS 的 PATH；命令在**文件沙箱之外执行**，工具描述也写明了这一点。
 
 ## 为什么需要它
 
@@ -90,18 +90,16 @@ Git Bash 自动发现顺序：`%ProgramFiles%\Git\usr\bin\bash.exe` → `%Progra
 
 ## 开发与验证
 
-两套测试按"是否需要启动进程"分开：`test/unit.test.mjs` 不启动任何进程（PATH 组合、环境擦除、收集器、`windowsHide` 回归守卫），在沙箱内也能通过；`test/exec.test.mjs` 启动真实 Git Bash 并写 spill 文件，必须在非沙箱 shell 中运行。两套都用 `node --test`，每条断言是一个具名用例，CI 在 `windows-latest` 上按 Node 20/22/24 全跑一遍（这是 Windows 专用插件，不存在其他平台的 job）。
-
-`test:e2e` 带 `--test-force-exit`：最后一次运行的管道与子进程句柄会留在事件循环里（被杀的子进程不保证关闭 stdio，是执行器本身就在处理的 Windows 行为），这是**有限残留而非泄漏**——套件里有一条断言保证四次运行不累积句柄。取消该 flag 会让 node 一直等到测试运行器超时。
-
-本插件是 `../../winbash` 的**可发布形态**：那份私有副本保留部署形态与全部排查记录，本仓提供 `dsh.bundle`、独立包名与 CI。两份的工具代码与断言同源，改动请同步。
+`test/exec.test.mjs` 会启动真实 Git Bash 并写 spill 文件，必须在非沙箱 shell 中运行。修改后运行：
 
 ```powershell
 npm test          # 纯单元，沙箱内亦可
-npm run test:e2e  # 启动 Git Bash，需要非沙箱 shell
+npm run test:e2e  # 需要非沙箱 shell
 npm run docs:check
 npm pack --dry-run
 ```
+
+本插件是同一个 Git Bash 工具的**可发布形态**；私用副本保留部署形态与排查记录，两份的工具代码与断言同源，改动请同步。
 
 ## License
 
