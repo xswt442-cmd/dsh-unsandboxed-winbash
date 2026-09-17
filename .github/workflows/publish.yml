@@ -4,8 +4,9 @@ name: publish
 # vX.Y.Z. This workflow verifies that contract, publishes to npm with provenance, and
 # creates the GitHub release from CHANGELOG.md.
 #
-# Runs on ubuntu-latest on purpose, unlike ci.yml: this job packs and uploads, it does
-# not exercise the plugin, so the platform the plugin targets is irrelevant here.
+# Runs on windows-latest: the release checks execute the unit suite, and that suite
+# requires Git for Windows on the host. A platform this plugin never loads on has no
+# business packing it either.
 
 on:
   push:
@@ -18,7 +19,7 @@ concurrency:
 jobs:
   publish:
     name: publish to npm
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write # create the GitHub release
       id-token: write # npm provenance (OIDC)
@@ -56,9 +57,10 @@ jobs:
           # (dsh-instance-manager). Accept both, since asserting only the object shape
           # would fail a plugin that loads perfectly well.
           node --input-type=module -e "import('./lib/index.js').then(m => { const d = m.default; const ok = typeof d === 'function' || (d && typeof d.apply === 'function'); if (!ok) { console.error('no default apply or plugin object'); process.exit(1) } })"
-          # The unit half only: this runner has no Git Bash, and the suite that needs it
-          # is exercised on windows-latest by ci.yml.
+          # Both suites, on the platform they require: the unit half insists on a real
+          # Git for Windows, which is why this job is not on ubuntu.
           npm test
+          npm run test:e2e
           npm run docs:check
           npm pack --dry-run
 
