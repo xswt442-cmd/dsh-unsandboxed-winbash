@@ -23,16 +23,15 @@ const CANDIDATES = [
   'C:' + B + 'Program Files' + B + 'Git' + B + 'bin' + B + 'bash.exe',
   'C:' + B + 'Program Files (x86)' + B + 'Git' + B + 'usr' + B + 'bin' + B + 'bash.exe'
 ]
-// This suite is platform-neutral on purpose: the CI unit job runs it on Linux,
-// where no Git for Windows exists. Only the assertions that need a real install are
-// skipped there, and they say so rather than failing.
+// This plugin is a Windows plugin, so the suite runs where Git for Windows is
+// installed — including CI, whose runner ships it. A missing install is a broken
+// environment, not a case to skip.
 const BASH = CANDIDATES.find((candidate) => existsSync(candidate))
-const NO_BASH = 'Git for Windows is not installed on this host'
-const needsBash = { skip: BASH === undefined ? NO_BASH : false }
+assert.ok(BASH, 'Git for Windows is required to run this suite')
 
 const BASE_CONFIG = {
   enableRunInBackground: true,
-  bashPath: BASH ?? CANDIDATES[0],
+  bashPath: BASH,
   gitPathPrefix: true,
   extraPath: '',
   timeoutMs: 120000,
@@ -44,7 +43,7 @@ const BASE_CONFIG = {
 }
 
 const request = (command, extra = {}) => ({
-  bashPath: BASH ?? CANDIDATES[0],
+  bashPath: BASH,
   command,
   dshEnv: { DSH_SHELL: '1' },
   ...extra
@@ -60,7 +59,7 @@ test('bash discovery never falls back to a PATH lookup', () => {
   )
 })
 
-test('configured bashPath wins, and an unset one auto-discovers', needsBash, () => {
+test('configured bashPath wins, and an unset one auto-discovers', () => {
   assert.equal(resolveGitBashPath(BASH, process.env), BASH, 'an existing configured path is returned as-is')
   assert.equal(resolveGitBashPath('', process.env), BASH, 'auto-discovery finds this machine Git Bash')
 })
@@ -103,11 +102,7 @@ test('composePath places extra entries first and keeps the host PATH at the tail
 })
 
 test('buildEnvironment repairs PATH and scrubs credential-shaped names', () => {
-  const env = buildEnvironment(request('true'), BASE_CONFIG, {
-    // Injected so this runs on any platform: the default resolver insists on a real
-    // Git for Windows install, while the PATH composition it feeds is platform-neutral.
-    resolveBashPath: () => BASH
-  })
+  const env = buildEnvironment(request('true'), BASE_CONFIG)
   assert.match(env.PATH, /usr\\bin/i)
   assert.equal(Object.keys(env).filter((key) => key.toUpperCase() === 'PATH').length, 1)
   assert.equal(env.NO_COLOR, '1')

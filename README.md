@@ -90,7 +90,7 @@ Git Bash 自动发现顺序：`%ProgramFiles%\Git\usr\bin\bash.exe` → `%Progra
 
 ## 开发与验证
 
-两套测试按"是否需要启动进程"分开：`test/unit.test.mjs` 不启动任何进程（PATH 组合、环境擦除、收集器、`windowsHide` 回归守卫），在沙箱内也能通过；`test/exec.test.mjs` 启动真实 Git Bash 并写 spill 文件，必须在非沙箱 shell 中运行。两套都用 `node --test`，每条断言是一个具名用例。
+两套测试按"是否需要启动进程"分开：`test/unit.test.mjs` 不启动任何进程（PATH 组合、环境擦除、收集器、`windowsHide` 回归守卫），在沙箱内也能通过；`test/exec.test.mjs` 启动真实 Git Bash 并写 spill 文件，必须在非沙箱 shell 中运行。两套都用 `node --test`，每条断言是一个具名用例，CI 在 `windows-latest` 上按 Node 20/22/24 全跑一遍（这是 Windows 专用插件，不存在其他平台的 job）。
 
 `test:e2e` 带 `--test-force-exit`：最后一次运行的管道与子进程句柄会留在事件循环里（被杀的子进程不保证关闭 stdio，是执行器本身就在处理的 Windows 行为），这是**有限残留而非泄漏**——套件里有一条断言保证四次运行不累积句柄。取消该 flag 会让 node 一直等到测试运行器超时。
 

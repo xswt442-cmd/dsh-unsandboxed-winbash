@@ -90,7 +90,7 @@ No other platform needs this plugin: `dsh-tool-bash` and `dsh-bash-sandbox` are 
 
 ## Development and verification
 
-The two suites are split by whether they start a process: `test/unit.test.mjs` starts none (PATH composition, environment scrubbing, the collector, the `windowsHide` regression guard) and passes inside the sandbox too, while `test/exec.test.mjs` starts real Git Bash and writes spill files, so it needs an unsandboxed shell. Both run under `node --test`, one named case per assertion.
+The two suites are split by whether they start a process: `test/unit.test.mjs` starts none (PATH composition, environment scrubbing, the collector, the `windowsHide` regression guard) and passes inside the sandbox too, while `test/exec.test.mjs` starts real Git Bash and writes spill files, so it needs an unsandboxed shell. Both run under `node --test`, one named case per assertion, and CI runs both on `windows-latest` for Node 20, 22 and 24 — this is a Windows-only plugin, so no job targets another platform.
 
 `test:e2e` carries `--test-force-exit`: the last run leaves its pipe sockets and the child handle in the event loop (a killed child does not guarantee its stdio closes, the Windows behaviour this executor works around). That residue is bounded rather than a leak, and the suite asserts that four runs do not accumulate handles. Dropping the flag makes node wait out the test-runner timeout instead.
 
