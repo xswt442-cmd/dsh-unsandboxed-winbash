@@ -51,7 +51,11 @@ jobs:
         run: |
           node --check lib/index.js
           node --check lib/tool/exec.js
-          node --input-type=module -e "import('./lib/index.js').then(m => { if (!m.default || typeof m.default.apply !== 'function') process.exit(1) })"
+          # A dsh plugin is either a default function (this repo, dsh-ballast,
+          # dsh-treekeeper: `export default apply`) or a default object carrying apply
+          # (dsh-instance-manager). Accept both, since asserting only the object shape
+          # would fail a plugin that loads perfectly well.
+          node --input-type=module -e "import('./lib/index.js').then(m => { const d = m.default; const ok = typeof d === 'function' || (d && typeof d.apply === 'function'); if (!ok) { console.error('no default apply or plugin object'); process.exit(1) } })"
           # The unit half only: this runner has no Git Bash, and the suite that needs it
           # is exercised on windows-latest by ci.yml.
           npm test

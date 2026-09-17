@@ -3,6 +3,12 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.1.1 - 2026-09-18
+
+### Changed
+
+- The root entry now carries a default export (`export default apply`), the shape `dsh-ballast` and `dsh-treekeeper` ship. It previously had named exports only, which loads fine by package name but fails any tool that checks a plugin by its default shape.
+
 ## 0.1.0 - 2026-09-18
 
 ### Added
