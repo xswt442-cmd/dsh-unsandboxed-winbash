@@ -89,8 +89,8 @@ const notFound = await runBash(request("definitely-not-a-command-xyz"), BASE_CON
 check("command-not-found surfaces as exit 127", notFound.exitCode === 127, String(notFound.exitCode));
 
 section("end-to-end: workdir");
-const cwdRun = await runBash(request("pwd", { workdir: "E:\\.codes\\createhelper\\winbash" }), BASE_CONFIG);
-check("workdir honored", /createhelper\/winbash/.test(cwdRun.stdout.text), cwdRun.stdout.text);
+const cwdRun = await runBash(request("pwd", { workdir: "E:\\.codes\\createhelper\\my-dsh-plugins/dsh-unsandboxed-winbash" }), BASE_CONFIG);
+check("workdir honored", /my-dsh-plugins[\\/]dsh-unsandboxed-winbash/.test(cwdRun.stdout.text), cwdRun.stdout.text);
 
 section("end-to-end: truncation spills the full output");
 const noisy = await runBash(request("for i in $(seq 1 4000); do echo line-$i; done"), { ...BASE_CONFIG, maxOutputBytes: 2048 });

@@ -1,5 +1,5 @@
-// Assemble the two test suites of dsh-unsandboxed-winbash from the original
-// winbash assertion file, so the split is reproducible instead of hand-edited.
+// Assemble this repo's two test suites from the original winbash assertion file,
+// so the split stays reproducible instead of hand-edited.
 //
 //   unit.test.mjs        pure helpers only  -> runs anywhere (also inside the sandbox)
 //   exec.test.mjs        spawning end-to-end -> needs an unsandboxed shell
@@ -9,9 +9,8 @@
 // is exactly what produced a truncated `section()` in the first attempt.
 import fs from 'node:fs'
 
-const ORIG = 'E:\\.codes\\createhelper\\winbash\\test\\exec.test.mjs'
-const DST = 'E:\\.codes\\createhelper\\dsh-unsandboxed-winbash\\test'
-const NEW = 'E:\\.codes\\createhelper\\dsh-unsandboxed-winbash'
+const ORIG = '../../winbash/test/exec.test.mjs'
+const DST = "test"
 
 const src = fs.readFileSync(ORIG, 'utf8').split('\n')
 // Original layout: 0..21 header+imports, 22..167 pure sections, 168..244 spawning sections.
@@ -22,8 +21,20 @@ const firstSection = src.findIndex((line) => line.startsWith('section('))
 if (firstSection === -1) throw new Error('no section() call found in ' + ORIG)
 const allBodies = src.slice(firstSection).join('\n')
 const pureBody = allBodies.split('section("end-to-end:')[0]
-const spawnBody = 'section("end-to-end:' + allBodies.split('section("end-to-end:').slice(1).join('section("end-to-end:')
-  .split('E:\\.codes\\createhelper\\winbash').join(NEW)
+const spawnBody = ('section("end-to-end:' + allBodies.split('section("end-to-end:').slice(1).join('section("end-to-end:'))
+  // The original hard-codes its own repo path in the workdir assertion and in the
+  // run-this-way comments. Retarget both by DIRECTORY NAME, never by a literal old
+  // path: the file carries escaped backslashes, so an escaped literal silently
+  // matches nothing (this bit twice before).
+  .split('winbash')
+  .join('my-dsh-plugins/dsh-unsandboxed-winbash')
+  // The workdir assertion is a regex literal, so it is replaced wholesale with a
+  // separator-agnostic pattern: a plain insertion of the path would either break
+  // the literal (unescaped `/`) or need regex-escaping through two string layers.
+  .replace(
+    /^check\("workdir honored".*$/m,
+    'check("workdir honored", /my-dsh-plugins[\\\\/]dsh-unsandboxed-winbash/.test(cwdRun.stdout.text), cwdRun.stdout.text);'
+  )
 
 const B = String.fromCharCode(92)
 const BASH = `C:${B}Program Files${B}Git${B}usr${B}bin${B}bash.exe`
