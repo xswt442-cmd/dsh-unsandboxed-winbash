@@ -2,6 +2,7 @@
 
 [中文](./README.md) | [English](./README.en.md)
 
+[![ci](https://github.com/xswt442-cmd/dsh-unsandboxed-winbash/actions/workflows/ci.yml/badge.svg)](https://github.com/xswt442-cmd/dsh-unsandboxed-winbash/actions/workflows/ci.yml)
 [![DSH](https://img.shields.io/static/v1?label=DSH&message=plugin&color=4D6BFE)](https://github.com/deepseek-ai/deepseek-harness)
 [![npm](https://img.shields.io/npm/v/dsh-unsandboxed-winbash?label=npm&color=4d6bfe)](https://www.npmjs.com/package/dsh-unsandboxed-winbash)
 [![release](https://img.shields.io/github/v/release/xswt442-cmd/dsh-unsandboxed-winbash?label=release&color=16a3a3)](https://github.com/xswt442-cmd/dsh-unsandboxed-winbash/releases)
@@ -89,7 +90,11 @@ No other platform needs this plugin: `dsh-tool-bash` and `dsh-bash-sandbox` are 
 
 ## Development and verification
 
-`test/unit.test.mjs` starts no process (PATH composition, environment scrubbing, bounded collector) and passes inside the sandbox too. `test/exec.test.mjs` starts real Git Bash and writes spill files, so it needs an unsandboxed shell. Both files are generated from `../../winbash/test/exec.test.mjs` by `scripts/split-tests.mjs`; edit the original, not the generated halves.
+The two suites are split by whether they start a process: `test/unit.test.mjs` starts none (PATH composition, environment scrubbing, the collector, the `windowsHide` regression guard) and passes inside the sandbox too, while `test/exec.test.mjs` starts real Git Bash and writes spill files, so it needs an unsandboxed shell. Both run under `node --test`, one named case per assertion.
+
+`test:e2e` carries `--test-force-exit`: the last run leaves its pipe sockets and the child handle in the event loop (a killed child does not guarantee its stdio closes, the Windows behaviour this executor works around). That residue is bounded rather than a leak, and the suite asserts that four runs do not accumulate handles. Dropping the flag makes node wait out the test-runner timeout instead.
+
+This plugin is the publishable form of `../../winbash`: that private copy keeps the deployment shape and every investigation note, while this repository provides `dsh.bundle`, its own package name and the test split. The assertions are the same in both, so change them together.
 
 ```powershell
 npm test          # pure units, also inside the sandbox

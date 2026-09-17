@@ -6,8 +6,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "node --test test/unit.test.mjs",
-    "test:e2e": "node test/exec.test.mjs",
-    "tests:split": "node scripts/split-tests.mjs",
+    "test:e2e": "node --test --test-force-exit test/exec.test.mjs",
     "docs:check": "node scripts/check-docs.mjs"
   },
   "keywords": [

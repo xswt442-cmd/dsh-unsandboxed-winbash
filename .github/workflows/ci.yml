@@ -1,0 +1,77 @@
+name: ci
+
+# This repository is the one plugin whose end-to-end suite SPAWNS Git Bash, so the
+# split matters here more than anywhere: the unit half must run anywhere (it is the
+# part a sandboxed contributor can run), and the e2e half needs a Windows runner with
+# Git Bash. Both run here.
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: unit (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+      - name: install
+        run: npm install --ignore-scripts
+      - name: docs
+        run: npm run docs:check
+      - name: unit tests (no process spawned)
+        run: npm test
+
+  windows-e2e:
+    name: windows end-to-end
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: install
+        run: npm install --ignore-scripts
+      - name: Git Bash is present
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'C:\Program Files\Git\usr\bin\bash.exe')) {
+            throw 'Git Bash is missing on this runner; the e2e suite cannot be trusted'
+          }
+      - name: end-to-end (spawns Git Bash)
+        run: npm run test:e2e
+
+  package:
+    name: package contents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: install
+        run: npm install --ignore-scripts
+      - name: the published tarball carries the bundle patch and both READMEs
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Matched against npm's own listing rather than --json output: the JSON shape
+          # differs between npm majors (array in some, object keyed by package in
+          # others), and a shape assumption here would fail the job for no real reason.
+          listing=$(npm pack --dry-run 2>&1)
+          for required in cordis.patch.yml lib/index.js lib/tool/exec.js README.md README.en.md CHANGELOG.md CHANGELOG.en.md LICENSE; do
+            if ! grep -qF "$required" <<<"$listing"; then
+              echo "::error::missing from the tarball: $required"
+              exit 1
+            fi
+          done
+          echo "tarball carries every required file"
