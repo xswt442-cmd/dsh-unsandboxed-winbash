@@ -1,0 +1,95 @@
+name: publish
+
+# A release bumps package.json and both changelogs, then tags the release commit as
+# vX.Y.Z. This workflow verifies that contract, publishes to npm with provenance, and
+# creates the GitHub release from CHANGELOG.md.
+#
+# Runs on ubuntu-latest on purpose, unlike ci.yml: this job packs and uploads, it does
+# not exercise the plugin, so the platform the plugin targets is irrelevant here.
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release
+      id-token: write # npm provenance (OIDC)
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: install development dependencies
+        run: npm install --ignore-scripts
+
+      - name: tag matches package.json version
+        shell: bash
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          tag=${GITHUB_REF_NAME#v}
+          if [ "$pkg" != "$tag" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match package.json version ${pkg}"
+            exit 1
+          fi
+
+      - name: release checks
+        id: sanity
+        shell: bash
+        run: |
+          node --check lib/index.js
+          node --check lib/tool/exec.js
+          node --input-type=module -e "import('./lib/index.js').then(m => { if (!m.default || typeof m.default.apply !== 'function') process.exit(1) })"
+          # The unit half only: this runner has no Git Bash, and the suite that needs it
+          # is exercised on windows-latest by ci.yml.
+          npm test
+          npm run docs:check
+          npm pack --dry-run
+
+      - name: skip when version is already published
+        id: published
+        shell: bash
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          if npm view --json "dsh-unsandboxed-winbash@${pkg}" version > /dev/null 2>&1; then
+            echo "already=yes" >> "$GITHUB_OUTPUT"
+            echo "::warning::${pkg} is already on npm — nothing to publish"
+          fi
+
+      # Auth = npm Trusted Publishing (OIDC), bound to this exact repo + workflow file in
+      # the package's npmjs.com settings. No token secret exists; --provenance carries the
+      # OIDC exchange, which needs id-token: write.
+      - name: publish to npm
+        if: steps.published.outputs.already != 'yes'
+        run: npm publish --provenance --access public
+
+      - name: GitHub release from changelog (idempotent)
+        if: always() && steps.sanity.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          notes=$(node scripts/release-notes.mjs "$version")
+          # Not gated on the publish step: the first version may be published out of band,
+          # before npm knows the name, and it still needs its notes. Re-running has to
+          # converge instead of failing over an occupied name, so an existing release is
+          # updated rather than refused.
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            echo "::warning::release ${GITHUB_REF_NAME} already exists - refreshing its notes"
+            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$notes"
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$notes"
+          fi
