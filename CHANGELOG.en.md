@@ -7,7 +7,7 @@ For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
 ### Changed
 
-- The root entry now carries a default export (`export default apply`), the shape `dsh-ballast` and `dsh-treekeeper` ship. It previously had named exports only, which loads fine by package name but fails any tool that checks a plugin by its default shape.
+- The root entry exports the plugin function itself (`export default apply`); a module that offers named exports only is not recognised as a plugin by tooling that checks a plugin's default shape.
 
 ## 0.1.0 - 2026-09-18
 

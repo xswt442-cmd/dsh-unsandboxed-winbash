@@ -7,7 +7,7 @@ Release notes 由对应版本段生成；最新版本在前。
 
 ### 变更
 
-- 根入口补上 default 导出（`export default apply`），与 `dsh-ballast` / `dsh-treekeeper` 同形。此前只有命名导出：按包名加载的 bundle 仍能工作，但任何按 default 形状检查插件的工具都会判定它不是插件。
+- 根入口改为导出插件函数本身（`export default apply`），只提供命名导出的模块不被任何按插件形状校验的工具认作插件。
 
 ## 0.1.0 - 2026-09-18
 
