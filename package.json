@@ -43,6 +43,13 @@
     "lib",
     "cordis.patch.yml",
     "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "CHANGELOG.en.md",
     "LICENSE"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xswt442-cmd/dsh-unsandboxed-winbash.git"
+  }
 }
