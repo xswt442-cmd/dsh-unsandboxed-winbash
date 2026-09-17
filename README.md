@@ -99,8 +99,6 @@ npm run docs:check
 npm pack --dry-run
 ```
 
-本插件是同一个 Git Bash 工具的**可发布形态**；私用副本保留部署形态与排查记录，两份的工具代码与断言同源，改动请同步。
-
 ## License
 
 [MIT](./LICENSE)

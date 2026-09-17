@@ -9,8 +9,7 @@
 - Keep `windowsHide: true` on the spawn: `CREATE_NO_WINDOW` is the whole reason no console window appears, and `test/unit.test.mjs` guards it.
 - The tool runs outside the file sandbox by design. Do not add a `sandbox_permissions` escalation surface: there is nothing to escalate from, and the tool description states the boundary.
 - The executable is discovered from the well-known Git for Windows locations, never through PATH, where `bash` is the WSL shim. `DSH_TEST_BASH` overrides discovery for tests.
-- This repo is the publishable form and is a real npm package: a version bump plus a `vX.Y.Z` tag publishes it. A private copy exists outside this workspace with the same tool code and assertions, so change both when the tool changes.
-- Read `RELEASING.md` only when publishing. It also records the one release that cannot go through the workflow: the first version, published by hand, because npm Trusted Publishing has to be bound to a package name that does not exist yet.
+- This repo is an npm package: a version bump plus a `vX.Y.Z` tag publishes it. Read `RELEASING.md` only when publishing; it records the one release the workflow cannot do, because npm Trusted Publishing must be bound to a package name that does not exist yet.
 
 ## Verify
 

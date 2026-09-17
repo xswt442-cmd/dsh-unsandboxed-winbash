@@ -99,8 +99,6 @@ npm run docs:check
 npm pack --dry-run
 ```
 
-This plugin is the publishable form of the same Git Bash tool; the private copy keeps the deployment shape and the investigation notes. The tool code and the assertions are the same in both, so change them together.
-
 ## License
 
 [MIT](./LICENSE)
