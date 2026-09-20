@@ -8,6 +8,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { deadline, timeoutOf } from '@deepseek-ai/dsh-timeout'
+import pluginDefault, { apply, inject } from '../lib/tool/index.js'
 import {
   buildEnvironment,
   candidateGitBashPaths,
@@ -189,4 +190,17 @@ test('a fired deadline is classified as a timeout', async () => {
   await new Promise((resolve) => setTimeout(resolve, 80))
   assert.notEqual(timeoutOf(timer.signal, 'BASH_TIMEOUT'), undefined)
   timer[Symbol.dispose]?.()
+})
+
+test('the plugin default carries inject, which is where the loader reads it', () => {
+  // dsh reads a plugin's metadata off the value it applies, and with a default export
+  // that value is the function, not the module namespace. `inject` left beside it as a
+  // named export gives the loader an undeclared ctx.systemPrompt and fails the whole
+  // boot -- "cannot get property systemPrompt without inject" -- which is the
+  // regression 0.1.1 and 0.1.2 shipped. dsh-ballast and dsh-treekeeper attach it the
+  // same way, and publish.yml runs this suite, so the guard gates a release.
+  assert.equal(typeof pluginDefault, 'function', 'the default export is what the loader applies')
+  assert.equal(pluginDefault, apply, 'the default export is the apply function')
+  assert.deepEqual(inject, ['tools', 'systemPrompt', 'shellEnv'])
+  assert.deepEqual(pluginDefault.inject, inject, 'inject travels on the function')
 })
