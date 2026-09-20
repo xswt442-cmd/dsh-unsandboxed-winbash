@@ -10,6 +10,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { deadline, timeoutOf } from '@deepseek-ai/dsh-timeout'
 import {
   buildEnvironment,
+  candidateGitBashPaths,
   composePath,
   createCollector,
   gitRootOf,
@@ -62,6 +63,24 @@ test('bash discovery never falls back to a PATH lookup', () => {
 test('configured bashPath wins, and an unset one auto-discovers', () => {
   assert.equal(resolveGitBashPath(BASH, process.env), BASH, 'an existing configured path is returned as-is')
   assert.equal(resolveGitBashPath('', process.env), BASH, 'auto-discovery finds this machine Git Bash')
+})
+
+test('discovery falls back to real Windows paths when the environment omits ProgramFiles', () => {
+  // Fallback literals are easy to over-escape: `"C:\Program Files"` evaluates to
+  // `C:Program Files`, which is not a directory, so a host whose environment lacks
+  // ProgramFiles would probe nowhere. Assert the composed path, not the source.
+  const fallback = candidateGitBashPaths({})
+  assert.equal(fallback[0], 'C:' + B + 'Program Files' + B + 'Git' + B + 'usr' + B + 'bin' + B + 'bash.exe')
+  assert.equal(fallback[1], 'C:' + B + 'Program Files' + B + 'Git' + B + 'bin' + B + 'bash.exe')
+
+  const supplied = candidateGitBashPaths({
+    ProgramFiles: 'D:' + B + 'PF',
+    'ProgramFiles(x86)': 'D:' + B + 'PF86',
+    LOCALAPPDATA: 'D:' + B + 'LA'
+  })
+  assert.equal(supplied[0], 'D:' + B + 'PF' + B + 'Git' + B + 'usr' + B + 'bin' + B + 'bash.exe', 'usr\\bin is preferred over the wrapper')
+  assert.equal(supplied[2], 'D:' + B + 'LA' + B + 'Programs' + B + 'Git' + B + 'usr' + B + 'bin' + B + 'bash.exe')
+  assert.equal(supplied[4], 'D:' + B + 'PF86' + B + 'Git' + B + 'usr' + B + 'bin' + B + 'bash.exe')
 })
 
 test('gitRootOf derives the install root from both layouts', () => {
