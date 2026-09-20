@@ -3,6 +3,14 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.1.3 - 2026-09-20
+
+### Fixed
+
+- The plugin mounted without `inject` when dsh applies its default export: since 0.1.1 the root entry exports the plugin function by default, and dsh reads a plugin's metadata off that value, so `inject` surviving only as a named export left the loader with an undeclared context and failed the whole boot ("cannot get property systemPrompt without inject"). `inject` now travels on the function (`apply.inject = inject`), matching dsh-ballast and dsh-treekeeper.
+- **Installing 0.1.1 or 0.1.2 breaks the dsh boot**; use 0.1.3 instead. 0.1.0 is unaffected because it had no default export.
+- The release check in `publish.yml` only asserted the plugin shape (a default apply); the new unit assertion also pins `inject` to the function, and the release check runs that suite.
+
 ## 0.1.2 - 2026-09-20
 
 ### Fixed

@@ -3,6 +3,14 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## 0.1.3 - 2026-09-20
+
+### 修复
+
+- 插件以默认导出挂载时缺少 `inject`：0.1.1 起根入口默认导出插件函数，而 dsh 只从这个默认导出读元数据，`inject` 仅作命名导出等于未声明上下文，整个 boot 直接失败（`cannot get property "systemPrompt" without inject`）。现在把 `inject` 挂到函数本身（`apply.inject = inject`，与 dsh-ballast、dsh-treekeeper 一致）。
+- **0.1.1 与 0.1.2 装到机器上会让 dsh 无法启动**，请改用 0.1.3；0.1.0 不受影响，因为它没有默认导出。
+- `publish.yml` 的发版检查只断言过插件形状（默认导出为函数），新增的单测断言现在同时锁定 `inject` 随函数走，而发版检查会跑这套单测。
+
 ## 0.1.2 - 2026-09-20
 
 ### 修复

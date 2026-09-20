@@ -1,6 +1,6 @@
 {
   "name": "dsh-unsandboxed-winbash",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Adds a Git Bash (MSYS2) tool to dsh on Windows. Git Bash cannot start under the harness file sandbox (its MSYS runtime needs a named pipe the restricted token refuses), so this tool spawns it outside the sandbox and says so in its own description. pwsh, the permission presets and the fs tools keep their sandbox unchanged.",
   "type": "module",
   "main": "lib/index.js",
