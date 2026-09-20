@@ -3,6 +3,16 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## 0.1.2 - 2026-09-20
+
+### 修复
+
+- `ProgramFiles` 缺失时的 Git Bash 发现回退写成了 `"C:\Program Files"`（单反斜杠）：JS 求值后是 `C:Program Files`，不是目录，于是这类宿主上六个候选路径全部失效、并报「找不到 Git for Windows」。已改为合法转义，并新增断言锁定组合后的候选路径与顺序。
+
+### 变更
+
+- 模块文档不再用 `@module` 标签引用私有副本的包名 `@deepseek-ai/dsh-winbash`：该名字从未发布，出现在本包源码里只会误导读者。
+
 ## 0.1.1 - 2026-09-18
 
 ### 变更

@@ -3,6 +3,16 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.1.2 - 2026-09-20
+
+### Fixed
+
+- The Git Bash discovery fallback used when `ProgramFiles` is absent was written as `"C:\Program Files"` (one backslash), which JavaScript evaluates to `C:Program Files` — not a directory — so all six candidates failed on such a host and it reported Git for Windows as missing. The literal is now correctly escaped, and an assertion pins the composed candidates and their order.
+
+### Changed
+
+- The module documentation no longer names the private copy's package (`@deepseek-ai/dsh-winbash`) in an `@module` tag: that name is never published, so carrying it in this package's sources only misleads a reader.
+
 ## 0.1.1 - 2026-09-18
 
 ### Changed
