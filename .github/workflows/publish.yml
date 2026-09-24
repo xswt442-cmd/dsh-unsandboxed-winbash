@@ -52,9 +52,9 @@ jobs:
         run: |
           node --check lib/index.js
           node --check lib/tool/exec.js
-          # A dsh plugin is either a default function (this repo, dsh-ballast,
-          # dsh-treekeeper: `export default apply`) or a default object carrying apply
-          # (dsh-instance-manager). Accept both, since asserting only the object shape
+              # A dsh plugin is either a default function (`export default apply`) or a
+              # default object carrying apply. Accept both, since asserting only the object
+              # shape would fail a plugin that loads perfectly well.
           # would fail a plugin that loads perfectly well.
           node --input-type=module -e "import('./lib/index.js').then(m => { const d = m.default; const ok = typeof d === 'function' || (d && typeof d.apply === 'function'); if (!ok) { console.error('no default apply or plugin object'); process.exit(1) } })"
           # Both suites, on the platform they require: the unit half insists on a real

@@ -197,8 +197,8 @@ test('the plugin default carries inject, which is where the loader reads it', ()
   // that value is the function, not the module namespace. `inject` left beside it as a
   // named export gives the loader an undeclared ctx.systemPrompt and fails the whole
   // boot -- "cannot get property systemPrompt without inject" -- which is the
-  // regression 0.1.1 and 0.1.2 shipped. dsh-ballast and dsh-treekeeper attach it the
-  // same way, and publish.yml runs this suite, so the guard gates a release.
+      // regression 0.1.1 and 0.1.2 shipped. `publish.yml` runs this suite, so the guard
+      // gates a release.
   assert.equal(typeof pluginDefault, 'function', 'the default export is what the loader applies')
   assert.equal(pluginDefault, apply, 'the default export is the apply function')
   assert.deepEqual(inject, ['tools', 'systemPrompt', 'shellEnv'])
