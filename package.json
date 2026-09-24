@@ -1,9 +1,46 @@
 {
   "name": "dsh-unsandboxed-winbash",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Adds a Git Bash (MSYS2) tool to dsh on Windows. Git Bash cannot start under the harness file sandbox (its MSYS runtime needs a named pipe the restricted token refuses), so this tool spawns it outside the sandbox and says so in its own description. pwsh, the permission presets and the fs tools keep their sandbox unchanged.",
   "type": "module",
   "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./tool": "./lib/tool/index.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "CHANGELOG.en.md",
+    "LICENSE",
+    "RELEASING.md"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.1.5-rc.1"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-llm": "^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0",
+    "@deepseek-ai/dsh-shell": "^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0",
+    "@deepseek-ai/dsh-subprocess": "^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0",
+    "@deepseek-ai/dsh-timeout": "^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0",
+    "@deepseek-ai/dsh-tools": "^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0",
+    "@deepseek-ai/schemastery": "^3.18.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh": ">=0.1.5-rc.1"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh": {
+      "optional": true
+    }
+  },
   "scripts": {
     "test": "node --test test/unit.test.mjs",
     "test:e2e": "node --test --test-force-exit test/exec.test.mjs",
@@ -18,36 +55,11 @@
     "msys2",
     "windows"
   ],
-  "license": "MIT",
-  "dependencies": {
-    "@deepseek-ai/dsh-llm": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-shell": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-subprocess": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-timeout": "^0.1.5-rc.1",
-    "@deepseek-ai/dsh-tools": "^0.1.5-rc.1",
-    "@deepseek-ai/schemastery": "^3.18.1"
-  },
-  "exports": {
-    ".": "./lib/index.js",
-    "./tool": "./lib/tool/index.js",
-    "./cordis.patch.yml": "./cordis.patch.yml",
-    "./package.json": "./package.json"
-  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
   },
-  "files": [
-    "lib",
-    "cordis.patch.yml",
-    "README.md",
-    "README.en.md",
-    "CHANGELOG.md",
-    "CHANGELOG.en.md",
-    "LICENSE",
-    "RELEASING.md"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xswt442-cmd/dsh-unsandboxed-winbash.git"

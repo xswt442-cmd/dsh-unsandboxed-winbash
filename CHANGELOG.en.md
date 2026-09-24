@@ -3,11 +3,18 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.1.4 - 2026-09-25
+
+### Changed
+
+- Declare host compatibility: `peerDependencies` and `engines.dsh` both require `>=0.1.5-rc.1`, with the peer marked optional so npm never installs the host. The host's startup preflight disables a plugin whose peer does not match; declaring none left it with nothing to judge.
+- Let the host supply the harness: `dsh-llm` / `dsh-shell` / `dsh-subprocess` / `dsh-timeout` / `dsh-tools` / `schemastery` move from `dependencies` to `peerDependencies` (range `>=0.1.5-0`, marked optional) with concrete versions in `devDependencies`. As dependencies they installed a private copy, so a newer host kept resolving an older generation.
+
 ## 0.1.3 - 2026-09-20
 
 ### Fixed
 
-- The plugin mounted without `inject` when dsh applies its default export: since 0.1.1 the root entry exports the plugin function by default, and dsh reads a plugin's metadata off that value, so `inject` surviving only as a named export left the loader with an undeclared context and failed the whole boot ("cannot get property systemPrompt without inject"). `inject` now travels on the function (`apply.inject = inject`), matching dsh-ballast and dsh-treekeeper.
+- The plugin mounted without `inject` when dsh applies its default export: since 0.1.1 the root entry exports the plugin function by default, and dsh reads a plugin's metadata off that value, so `inject` surviving only as a named export left the loader with an undeclared context and failed the whole boot ("cannot get property systemPrompt without inject"). `inject` now travels on the function (`apply.inject = inject`).
 - **Installing 0.1.1 or 0.1.2 breaks the dsh boot**; use 0.1.3 instead. 0.1.0 is unaffected because it had no default export.
 - The release check in `publish.yml` only asserted the plugin shape (a default apply); the new unit assertion also pins `inject` to the function, and the release check runs that suite.
 
@@ -19,7 +26,7 @@ For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
 ### Changed
 
-- The module documentation no longer names the private copy's package (`@deepseek-ai/dsh-winbash`) in an `@module` tag: that name is never published, so carrying it in this package's sources only misleads a reader.
+- The module documentation no longer names an unpublished package in an `@module` tag: carrying it in this package's sources only misleads a reader.
 
 ## 0.1.1 - 2026-09-18
 
