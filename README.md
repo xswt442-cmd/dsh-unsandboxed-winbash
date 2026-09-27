@@ -90,7 +90,7 @@ Git Bash 自动发现顺序：`%ProgramFiles%\Git\usr\bin\bash.exe` → `%Progra
 
 ## 开发与验证
 
-`test/exec.test.mjs` 会启动真实 Git Bash 并写 spill 文件，必须在非沙箱 shell 中运行。修改后运行：
+`test/e2e/` 会启动真实 Git Bash 并写 spill 文件，必须在非沙箱 shell 中运行；`test/unit/` 不启动任何进程，沙箱内亦可，`test/unit/layout.test.mjs` 守住这个分层。修改后运行：
 
 ```powershell
 npm test          # 纯单元，沙箱内亦可

@@ -69,7 +69,7 @@ The package declares `dsh.bundle`, so the bundle patch mounts the tool row itsel
 
 Auto-discovery order: `%ProgramFiles%\Git\usr\bin\bash.exe` → `%ProgramFiles%\Git\bin\bash.exe` → `%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe` → `%ProgramFiles(x86)%\Git\...`. When nothing is found and `bashPath` is unset, only a `winbash` call fails; mounting the plugin does not.
 
-## Boundaries and security
+## Safety and limits
 
 - The command runs outside the file sandbox: MSYS cannot start under an ACL-restricted token, which is why this plugin exists. The tool description states it, and no `sandbox_permissions` escalation surface is offered, because there is nothing to escalate from.
 - No service is replaced, only one tool added: `pwsh`, the permission presets, the `/permission` command and the `fs` tools keep the sandbox and approval policy they already had.
@@ -90,7 +90,7 @@ No other platform needs this plugin: `dsh-tool-bash` and `dsh-bash-sandbox` are 
 
 ## Development and verification
 
-`test/exec.test.mjs` starts real Git Bash and writes spill files, so it needs an unsandboxed shell. After a change:
+`test/e2e/` starts real Git Bash and writes spill files, so it needs an unsandboxed shell; `test/unit/` never starts a process and runs inside the sandbox, and `test/unit/layout.test.mjs` is what keeps that split honest. After a change:
 
 ```powershell
 npm test          # pure units, also inside the sandbox
