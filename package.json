@@ -44,8 +44,8 @@
     }
   },
   "scripts": {
-    "test": "node --test \"test/unit/**/*.test.mjs\"",
-    "test:e2e": "node --test --test-force-exit \"test/e2e/**/*.test.mjs\"",
+    "test": "node scripts/run-layer.mjs test/unit",
+    "test:e2e": "node scripts/run-layer.mjs test/e2e --test-force-exit",
     "docs:check": "dsh-plugin-docs"
   },
   "keywords": [
