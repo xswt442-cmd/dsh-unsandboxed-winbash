@@ -1,7 +1,7 @@
 {
   "name": "dsh-unsandboxed-winbash",
   "version": "0.1.4",
-  "description": "Adds a Git Bash (MSYS2) tool to dsh on Windows. Git Bash cannot start under the harness file sandbox (its MSYS runtime needs a named pipe the restricted token refuses), so this tool spawns it outside the sandbox and says so in its own description. pwsh, the permission presets and the fs tools keep their sandbox unchanged.",
+  "description": "Windows 上给 dsh 增加 Git Bash（MSYS2）工具的插件：Git Bash 无法在文件沙箱内启动（MSYS 运行时需要的命名管道被受限 token 拒绝），所以本插件在沙箱之外执行它，并在工具描述里写明这一点；pwsh、权限预设与 fs 工具的沙箱保持不变。Adds a Git Bash (MSYS2) tool to dsh on Windows: Git Bash cannot start inside the harness file sandbox (its MSYS runtime needs a named pipe the restricted token refuses), so this tool spawns it outside the sandbox and says so in its own description, while pwsh, the permission presets and the fs tools keep their sandbox unchanged.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -17,8 +17,7 @@
     "README.en.md",
     "CHANGELOG.md",
     "CHANGELOG.en.md",
-    "LICENSE",
-    "RELEASING.md"
+    "LICENSE"
   ],
   "license": "MIT",
   "engines": {
@@ -33,6 +32,9 @@
     "@deepseek-ai/dsh-tools": "^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0",
     "@deepseek-ai/schemastery": "^3.18.1"
   },
+  "devDependencies": {
+    "dsh-mini-utility-dock": "0.5.1"
+  },
   "peerDependencies": {
     "@deepseek-ai/dsh": ">=0.1.5-rc.1"
   },
@@ -42,13 +44,14 @@
     }
   },
   "scripts": {
-    "test": "node --test test/unit.test.mjs",
-    "test:e2e": "node --test --test-force-exit test/exec.test.mjs",
-    "docs:check": "node scripts/check-docs.mjs"
+    "test": "node --test \"test/unit/**/*.test.mjs\"",
+    "test:e2e": "node --test --test-force-exit \"test/e2e/**/*.test.mjs\"",
+    "docs:check": "dsh-plugin-docs"
   },
   "keywords": [
     "dsh",
     "deepseek-harness",
+    "deepseek",
     "dsh-plugin",
     "winbash",
     "git-bash",
@@ -60,8 +63,13 @@
       "patch": "./cordis.patch.yml"
     }
   },
+  "author": "xswt442-cmd",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xswt442-cmd/dsh-unsandboxed-winbash.git"
+  },
+  "homepage": "https://github.com/xswt442-cmd/dsh-unsandboxed-winbash#readme",
+  "bugs": {
+    "url": "https://github.com/xswt442-cmd/dsh-unsandboxed-winbash/issues"
   }
 }
