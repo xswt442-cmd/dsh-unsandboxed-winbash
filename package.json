@@ -32,9 +32,6 @@
     "@deepseek-ai/dsh-tools": "^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0",
     "@deepseek-ai/schemastery": "^3.18.1"
   },
-  "devDependencies": {
-    "dsh-mini-utility-dock": "0.5.1"
-  },
   "peerDependencies": {
     "@deepseek-ai/dsh": ">=0.1.5-rc.1"
   },
@@ -46,7 +43,7 @@
   "scripts": {
     "test": "node scripts/run-layer.mjs test/unit",
     "test:e2e": "node scripts/run-layer.mjs test/e2e --test-force-exit",
-    "docs:check": "dsh-plugin-docs"
+    "docs:check": "node scripts/check-docs.mjs"
   },
   "keywords": [
     "dsh",
