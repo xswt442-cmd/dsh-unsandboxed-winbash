@@ -1,6 +1,6 @@
 {
   "name": "dsh-unsandboxed-winbash",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Windows 上给 dsh 增加 Git Bash（MSYS2）工具的插件：Git Bash 无法在文件沙箱内启动（MSYS 运行时需要的命名管道被受限 token 拒绝），所以本插件在沙箱之外执行它，并在工具描述里写明这一点；pwsh、权限预设与 fs 工具的沙箱保持不变。Adds a Git Bash (MSYS2) tool to dsh on Windows: Git Bash cannot start inside the harness file sandbox (its MSYS runtime needs a named pipe the restricted token refuses), so this tool spawns it outside the sandbox and says so in its own description, while pwsh, the permission presets and the fs tools keep their sandbox unchanged.",
   "type": "module",
   "main": "lib/index.js",
@@ -15,8 +15,8 @@
     "cordis.patch.yml",
     "README.md",
     "README.en.md",
-    "CHANGELOG.md",
-    "CHANGELOG.en.md",
+    "docs/CHANGELOG.md",
+    "docs/CHANGELOG.en.md",
     "LICENSE"
   ],
   "license": "MIT",

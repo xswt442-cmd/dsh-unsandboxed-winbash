@@ -3,6 +3,12 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## 0.1.6 - 2026-09-29
+
+### 变更
+
+- `CHANGELOG.md`、`CHANGELOG.en.md`、`RELEASING.md` 移入 `docs/`，仓库根目录只留两份 README、`LICENSE` 与 `AGENTS.md`；npm 包内的两份 CHANGELOG 按新路径发布。
+
 ## 0.1.5 - 2026-09-28
 
 ### 修复

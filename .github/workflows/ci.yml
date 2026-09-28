@@ -76,7 +76,7 @@ jobs:
           # others), and a shape assumption here would fail the job for no real reason.
           # `shell: bash` is deliberate on a Windows runner: Git Bash ships there.
           listing=$(npm pack --dry-run 2>&1)
-          for required in cordis.patch.yml lib/index.js lib/tool/exec.js README.md README.en.md CHANGELOG.md CHANGELOG.en.md LICENSE; do
+          for required in cordis.patch.yml lib/index.js lib/tool/exec.js README.md README.en.md docs/CHANGELOG.md docs/CHANGELOG.en.md LICENSE; do
             if ! grep -qF "$required" <<<"$listing"; then
               echo "::error::missing from the tarball: $required"
               exit 1

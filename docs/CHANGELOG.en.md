@@ -3,6 +3,12 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.1.6 - 2026-09-29
+
+### Changed
+
+- `CHANGELOG.md`, `CHANGELOG.en.md` and `RELEASING.md` move into `docs/`; the repository root keeps the two READMEs, `LICENSE` and `AGENTS.md`. The npm package ships the two changelogs at their new paths.
+
 ## 0.1.5 - 2026-09-28
 
 ### Fixed
