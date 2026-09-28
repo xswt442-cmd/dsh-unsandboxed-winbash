@@ -3,30 +3,48 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.1.5 - 2026-09-28
+
+### Fixed
+
+- Argument validation checks types first: a non-string `command` / `description` returns a validation error instead of a `TypeError`, and the `enableRunInBackground: false` refusal is covered by a unit test.
+- On `SIGINT` / `SIGBREAK` the plugin terminates its Git Bash process trees before exiting, and takes over only while it is that signal's sole listener; on Windows the process ends itself once the cleanup is done.
+
+### Changed
+
+- Tests are split into `test/unit/` (`npm test`, spawns nothing) and `test/e2e/` (`npm run test:e2e`, spawns real Git Bash), with one check that rejects a test file collected by neither script.
+- The tree-termination unit cases cover a tree whose descendants survive, the e2e case asserts that a grandchild process is terminated with its tree, and one further case verifies exit cleanup against a real host process.
+- `docs:check` runs this repository's own `scripts/check-docs.mjs` with no external dependency; the comparison covers per-section item counts in both CHANGELOGs and the `Unreleased` section, and an all-zero `--base` skips the pair check.
+- `RELEASING.md` matches the actual flow: a `v*` tag triggers OIDC Trusted Publishing, and there is no manual `npm publish` step.
+
+### Maintenance
+
+- The npm package excludes `RELEASING.md`; `package.json` adds `homepage` and `bugs` and a bilingual `description`; `.gitattributes` is added and `.gitignore` completed.
+- The publish CI uses `npm ci --ignore-scripts` with an npm cache, requires the tag to point at a commit on `main`, and splits into checks / npm / GitHub release jobs, only the one that runs no tests holding repository write access.
+
 ## 0.1.4 - 2026-09-25
 
 ### Changed
 
-- Declare host compatibility: `peerDependencies` and `engines.dsh` both require `>=0.1.5-rc.1`, with the peer marked optional so npm never installs the host. The host's startup preflight disables a plugin whose peer does not match; declaring none left it with nothing to judge.
-- Let the host supply the harness: `dsh-llm` / `dsh-shell` / `dsh-subprocess` / `dsh-timeout` / `dsh-tools` / `schemastery` move from `dependencies` to `peerDependencies` (range `>=0.1.5-0`, marked optional) with concrete versions in `devDependencies`. As dependencies they installed a private copy, so a newer host kept resolving an older generation.
+- Declare host compatibility: `peerDependencies` and `engines.dsh` both require `>=0.1.5-rc.1`, with the peer optional so npm never installs the host. The host's startup preflight uses that range to decide whether to disable this plugin.
+- Six `@deepseek-ai/*` packages and `schemastery` move from `dependencies` to optional `peerDependencies` plus `devDependencies`, so the host supplies them and this package no longer resolves a private older copy.
 
 ## 0.1.3 - 2026-09-20
 
 ### Fixed
 
-- The plugin mounted without `inject` when dsh applies its default export: since 0.1.1 the root entry exports the plugin function by default, and dsh reads a plugin's metadata off that value, so `inject` surviving only as a named export left the loader with an undeclared context and failed the whole boot ("cannot get property systemPrompt without inject"). `inject` now travels on the function (`apply.inject = inject`).
-- **Installing 0.1.1 or 0.1.2 breaks the dsh boot**; use 0.1.3 instead. 0.1.0 is unaffected because it had no default export.
-- The release check in `publish.yml` only asserted the plugin shape (a default apply); the new unit assertion also pins `inject` to the function, and the release check runs that suite.
+- `inject` now travels on the plugin's default export: dsh reads a plugin's metadata from that value, and without it the whole boot failed ("cannot get property systemPrompt without inject").
+- **Installing 0.1.1 or 0.1.2 breaks the dsh boot**; use 0.1.3. 0.1.0 is unaffected.
 
 ## 0.1.2 - 2026-09-20
 
 ### Fixed
 
-- The Git Bash discovery fallback used when `ProgramFiles` is absent was written as `"C:\Program Files"` (one backslash), which JavaScript evaluates to `C:Program Files` — not a directory — so all six candidates failed on such a host and it reported Git for Windows as missing. The literal is now correctly escaped, and an assertion pins the composed candidates and their order.
+- On a host without `ProgramFiles`, Git Bash discovery now falls back to a valid Windows path, so all six candidates resolve again. An assertion pins the composed candidates and their order.
 
 ### Changed
 
-- The module documentation no longer names an unpublished package in an `@module` tag: carrying it in this package's sources only misleads a reader.
+- The module documentation no longer names an unpublished package in an `@module` tag.
 
 ## 0.1.1 - 2026-09-18
 

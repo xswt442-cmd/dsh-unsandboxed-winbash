@@ -4,25 +4,34 @@ name: publish
 # vX.Y.Z. This workflow verifies that contract, publishes to npm with provenance, and
 # creates the GitHub release from CHANGELOG.md.
 #
-# Runs on windows-latest: the release checks execute the unit suite, and that suite
-# requires Git for Windows on the host. A platform this plugin never loads on has no
+# Runs on windows-latest throughout: the release checks run the end-to-end suite, and
+# that one spawns a real Git for Windows. A platform this plugin never loads on has no
 # business packing it either.
 
 on:
   push:
     tags: ['v*']
 
+# The default for every job here is read-only on the repository. The one job that needs
+# more says so on itself, and it is the job that runs no tests and installs nothing.
+permissions:
+  contents: read
+
+# Publishing must never be cancelled halfway through: a second tag landing while the
+# first is on npm would race the registry. Queue instead of cancel.
 concurrency:
   group: publish
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: publish to npm
+  # Everything that executes this repository's code runs here, and nothing here can
+  # write to the repository. That is the point of the split: GITHUB_TOKEN is exported
+  # into every step of a job, so a `contents: write` job that also ran `npm test` would
+  # hand a repository-write credential to the code under test — which for this plugin
+  # includes a suite that spawns a real Git Bash.
+  checks:
+    name: release checks
     runs-on: windows-latest
-    permissions:
-      contents: write # create the GitHub release
-      id-token: write # npm provenance (OIDC)
     steps:
       - uses: actions/checkout@v5
         with:
@@ -31,10 +40,13 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
+          cache: 'npm'
 
       - name: install development dependencies
-        run: npm install --ignore-scripts
+        # `npm ci` from the tracked lockfile: what gets published is built from the
+        # same tree the release was verified against. `--ignore-scripts` keeps a
+        # dependency's install hook out of the run.
+        run: npm ci --ignore-scripts
 
       - name: tag matches package.json version
         shell: bash
@@ -46,23 +58,58 @@ jobs:
             exit 1
           fi
 
-      - name: release checks
-        id: sanity
+      - name: tag points at a commit on main
         shell: bash
         run: |
-          node --check lib/index.js
-          node --check lib/tool/exec.js
-              # A dsh plugin is either a default function (`export default apply`) or a
-              # default object carrying apply. Accept both, since asserting only the object
-              # shape would fail a plugin that loads perfectly well.
-          # would fail a plugin that loads perfectly well.
+          # Any tag that names this version would otherwise publish it, including one
+          # cut on a side branch that never merged. A release is a commit on main, so
+          # the ancestry is checked against main itself rather than trusted.
+          git fetch --no-tags --quiet origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+            echo "::error::tag ${GITHUB_REF_NAME} points at ${GITHUB_SHA}, which is not on main"
+            exit 1
+          fi
+          echo "tag ${GITHUB_REF_NAME} is on main"
+
+      - name: release checks
+        shell: bash
+        run: |
+          # Every file the package ships, not a hand-written list: a new module under
+          # lib/ has to be parsed by the release too.
+          find lib -name '*.js' -exec node --check {} \;
+          # A dsh plugin is either a default function (`export default apply`) or a
+          # default object carrying apply. Accept both, since asserting only the object
+          # shape would fail a plugin that loads perfectly well.
           node --input-type=module -e "import('./lib/index.js').then(m => { const d = m.default; const ok = typeof d === 'function' || (d && typeof d.apply === 'function'); if (!ok) { console.error('no default apply or plugin object'); process.exit(1) } })"
-          # Both suites, on the platform they require: the unit half insists on a real
-          # Git for Windows, which is why this job is not on ubuntu.
+          # Both suites, on the platform they require: the end-to-end half insists on a
+          # real Git for Windows, which is why this job is not on ubuntu.
           npm test
           npm run test:e2e
           npm run docs:check
           npm pack --dry-run
+
+  # Auth = npm Trusted Publishing (OIDC), bound to this exact repo + workflow file in
+  # the package's npmjs.com settings. No token secret exists; --provenance carries the
+  # OIDC exchange, which needs id-token: write.
+  #
+  # Nothing is installed here on purpose: this package declares no `prepare` or
+  # `prepack` script, so `npm publish` only reads package.json and the `files` list.
+  # Add a lifecycle script and this job has to install first — and think about what it
+  # then runs while holding a publish credential.
+  npm:
+    name: publish to npm
+    needs: checks
+    runs-on: windows-latest
+    permissions:
+      contents: read # Nothing here writes to the repository.
+      id-token: write # npm provenance (OIDC).
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
 
       - name: skip when version is already published
         id: published
@@ -74,25 +121,40 @@ jobs:
             echo "::warning::${pkg} is already on npm — nothing to publish"
           fi
 
-      # Auth = npm Trusted Publishing (OIDC), bound to this exact repo + workflow file in
-      # the package's npmjs.com settings. No token secret exists; --provenance carries the
-      # OIDC exchange, which needs id-token: write.
       - name: publish to npm
         if: steps.published.outputs.already != 'yes'
         run: npm publish --provenance --access public
 
-      - name: GitHub release from changelog (idempotent)
-        if: always() && steps.sanity.outcome == 'success'
+  # The only job with a repository-write token, and the only one that installs no
+  # dependencies and runs no test suite: it reads one CHANGELOG section through a script
+  # from the commit the tag already pointed at, and calls `gh`.
+  #
+  # It waits for `npm` but does not require it to succeed: the first version may be
+  # published out of band, before npm knows the name, and it still needs its notes, and
+  # a registry hiccup must not take the release down with it. Re-running has to converge
+  # instead of failing over an occupied name, so an existing release is refreshed rather
+  # than refused.
+  release:
+    name: GitHub release from changelog
+    needs: [checks, npm]
+    if: always() && needs.checks.result == 'success'
+    runs-on: windows-latest
+    permissions:
+      contents: write # Create the matching GitHub release.
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: GitHub release (idempotent)
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           version=${GITHUB_REF_NAME#v}
           notes=$(node scripts/release-notes.mjs "$version")
-          # Not gated on the publish step: the first version may be published out of band,
-          # before npm knows the name, and it still needs its notes. Re-running has to
-          # converge instead of failing over an occupied name, so an existing release is
-          # updated rather than refused.
           if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
             echo "::warning::release ${GITHUB_REF_NAME} already exists - refreshing its notes"
             gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$notes"

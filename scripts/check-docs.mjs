@@ -1,3 +1,29 @@
+#!/usr/bin/env node
+// Bilingual structure check for the documentation pair this repository ships:
+// README.md against README.en.md, CHANGELOG.md against CHANGELOG.en.md.
+//
+// What it verifies, taking no file arguments (the four file names are fixed by
+// convention, not passed in):
+//   * both READMEs share the same heading-level sequence and code-fence
+//     languages — content inside fences is exempt, since that is where
+//     language-specific examples live;
+//   * both CHANGELOGs expose the same releases — the `Unreleased` section
+//     included, since that is where the newest edits land — with version, date,
+//     per-section item counts, and section titles normalized through a bilingual
+//     category map (新增/Added, 修复/Fixed, ...);
+//   * with `--base <revision>`, both files of each pair changed together since
+//     that revision — a one-sided edit is a missing translation. An all-zero
+//     revision is the null OID, which is what `github.event.before` carries for a
+//     branch that was just created or force-pushed: there is no previous revision
+//     to diff against, so that one requirement is skipped with a note instead of
+//     dying inside `git diff`.
+//
+// This repository keeps its own copy of the check rather than depending on one.
+// It embeds no shared source fragment, so a documentation lint would be the only
+// reason to install something from outside — and that reason is not worth the
+// coupling: `npm run docs:check` then needs a successful install, on a machine
+// and in a CI job where the check itself is the thing that must always run.
+
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 
@@ -29,12 +55,26 @@ function changelogShape(file) {
   let release
   let section
 
+  // A `## ...` heading opens a release and clears the current section, so bullets
+  // that follow it before any `###` still count — into an anonymous leading
+  // section — instead of being silently dropped.
+  const openRelease = (version, date) => {
+    release = { version, date, sections: [] }
+    releases.push(release)
+    section = undefined
+  }
+
   for (const line of read(file).split('\n')) {
     const version = line.match(/^##\s+(\d+\.\d+\.\d+)(?:\s+-\s+(\d{4}-\d{2}-\d{2}))?\s*$/)
     if (version) {
-      release = { version: version[1], date: version[2] ?? '', sections: [] }
-      releases.push(release)
-      section = undefined
+      openRelease(version[1], version[2] ?? '')
+      continue
+    }
+    // `Unreleased` is the version-less top release and usually the most-edited
+    // section, so it is compared with the same shape as a numbered one. Both
+    // languages keep the literal heading, so the labels match directly.
+    if (/^##\s+Unreleased\s*$/i.test(line)) {
+      openRelease('Unreleased', '')
       continue
     }
     if (!release) continue
@@ -45,7 +85,13 @@ function changelogShape(file) {
       release.sections.push(section)
       continue
     }
-    if (section && /^\s*-\s+/.test(line)) section.items += 1
+    if (/^\s*-\s+/.test(line)) {
+      if (!section) {
+        section = { title: '', items: 0 }
+        release.sections.push(section)
+      }
+      section.items += 1
+    }
   }
 
   return releases
@@ -68,7 +114,9 @@ function assertEqual(left, right, message) {
   }
 }
 
-assertEqual(markdownShape('README.md'), markdownShape('README.en.md'), 'README structure differs between languages')
+const zhReadme = markdownShape('README.md')
+const enReadme = markdownShape('README.en.md')
+assertEqual(zhReadme, enReadme, 'README structure differs between languages')
 
 const normalizeLog = (file) => changelogShape(file).map((release) => ({
   version: release.version,
@@ -85,16 +133,25 @@ if (baseIndex !== -1) {
   const base = process.argv[baseIndex + 1]
   if (!base) throw new Error('--base requires a Git revision')
 
-  const changed = new Set(execFileSync('git', ['diff', '--name-only', base, 'HEAD'], { encoding: 'utf8' })
-    .split(/\r?\n/)
-    .filter(Boolean))
+  // The null OID, in either hash length. A workflow that passes
+  // `github.event.before` here gets it whenever a branch is created or
+  // force-pushed, and `git diff 000... HEAD` is not a comparison with no base —
+  // it is an error. So the honest reading is the one the push event states: there
+  // is nothing before this push, and the pair test cannot run.
+  if (/^0+$/.test(base)) {
+    console.log(`note: --base ${base} is the null OID (new branch or force-push) — pair-change check skipped`)
+  } else {
+    const changed = new Set(execFileSync('git', ['diff', '--name-only', base, 'HEAD'], { encoding: 'utf8' })
+      .split(/\r?\n/)
+      .filter(Boolean))
 
-  for (const [primary, translation] of [
-    ['README.md', 'README.en.md'],
-    ['CHANGELOG.md', 'CHANGELOG.en.md'],
-  ]) {
-    if (changed.has(primary) !== changed.has(translation)) {
-      throw new Error(`${primary} and ${translation} must change together`)
+    for (const [primary, translation] of [
+      ['README.md', 'README.en.md'],
+      ['CHANGELOG.md', 'CHANGELOG.en.md'],
+    ]) {
+      if (changed.has(primary) !== changed.has(translation)) {
+        throw new Error(`${primary} and ${translation} must change together`)
+      }
     }
   }
 }

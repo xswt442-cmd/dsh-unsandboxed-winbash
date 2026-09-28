@@ -1,3 +1,55 @@
+# Dependencies
 node_modules/
+
+# Logs
 *.log
+npm-debug.log*
+yarn-error.log*
+logs/
+
+# Build & coverage output
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Package artifacts
+*.tgz
+*.tar.gz
+.npm/
+# The lockfile is tracked on purpose: this package has runtime dependencies, so
+# the lock is what makes an install reproducible for a bundle.
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.p12
+
+# Editors & OS
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+
+# Agent tooling
+.workbuddy/
+.claude/
+.codex/
+.cursor/
+.continue/
+.aider*
+*.local.md
+
+# Test residue: the executor mirrors oversized output into a spill file, and a
+# probe copy of one never belongs in the repo.
 *.spill

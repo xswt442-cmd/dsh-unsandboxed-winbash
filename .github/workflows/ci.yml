@@ -20,21 +20,37 @@ jobs:
         node: [20, 22, 24]
     steps:
       - uses: actions/checkout@v5
+        with:
+          # The paired-translation gate diffs the branch against the pull request
+          # base, which a shallow checkout cannot answer.
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
+          cache: 'npm'
       - name: install
-        run: npm install --ignore-scripts
+        # `npm ci` from the tracked lockfile, so the job resolves exactly what the
+        # developer committed, and `--ignore-scripts` keeps a dependency's install
+        # hook out of the run.
+        run: npm ci --ignore-scripts
       - name: docs
         run: npm run docs:check
+      - name: docs pairs change together
+        if: github.event_name == 'pull_request'
+        env:
+          DOCS_BASE: ${{ github.event.pull_request.base.sha }}
+        # `shell: bash` is deliberate on a Windows runner: Git Bash ships there, and
+        # the variable would not expand in the default PowerShell.
+        shell: bash
+        run: npm run docs:check -- --base "$DOCS_BASE"
+      - name: unit tests (no process spawned)
+        run: npm test
       - name: Git Bash is present
         shell: pwsh
         run: |
           if (-not (Test-Path 'C:\Program Files\Git\usr\bin\bash.exe')) {
-            throw 'Git Bash is missing on this runner; the suites cannot be trusted'
+            throw 'Git Bash is missing on this runner; the end-to-end suite cannot be trusted'
           }
-      - name: unit tests (no process spawned)
-        run: npm test
       - name: end-to-end (spawns Git Bash)
         run: npm run test:e2e
 
@@ -48,8 +64,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
+          cache: 'npm'
       - name: install
-        run: npm install --ignore-scripts
+        run: npm ci --ignore-scripts
       - name: the published tarball carries the bundle patch and both READMEs
         shell: bash
         run: |
