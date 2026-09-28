@@ -1,0 +1,27 @@
+# Normalize repository text to LF, including scripts and workflows.
+# Without this file a clone on a `core.autocrlf=true` machine keeps its working
+# tree in CRLF, and the next edit then commits CRLF blobs for the sources, the
+# workflows and the package manifest.
+* text=auto eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary files are not normalized or diffed as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.zip binary
+*.tgz binary
+
+# Use word-level diffs for prose.
+*.md text diff=markdown
+
+# Keep generated lockfiles out of language statistics.
+package-lock.json linguist-generated=true

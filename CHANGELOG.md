@@ -3,30 +3,48 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## Unreleased
+
+### 修复
+
+- `winbash` 参数校验先判类型：非字符串的 `command` / `description` 现在回正常的校验错误，不再抛 `TypeError`。`enableRunInBackground: false` 的拒绝路径同样补上了单元测试。
+- 宿主被 Ctrl+C / Ctrl+Break（`SIGINT` / `SIGBREAK`）结束时会先清理 Git Bash 进程树，且只在本插件是该信号唯一监听者时接管。Windows 没有可交回的信号，清理后由插件自己结束进程。
+
+### 变更
+
+- 测试分成 `test/unit/`（`npm test`，不启动进程）与 `test/e2e/`（`npm run test:e2e`，启动真实 Git Bash），并有一例守卫拦住不被任何脚本收集的新文件。
+- 整树终止补上单元测试负例；e2e 里「孙进程没死」从只 `console.warn` 改成硬断言，并新增一例用真宿主进程验证退出清理。
+- `docs:check` 改为调用 devDependency `dsh-mini-utility-dock` 提供的 `dsh-plugin-docs`，本仓不再自带那份实现。
+- `RELEASING.md` 按真实流程重写：发布由 `v*` tag 触发 OIDC Trusted Publishing，没有手工 `npm publish` 那一步。
+
+### 维护
+
+- npm 包不再包含 `RELEASING.md`；补上 `homepage` 与 `bugs`，`description` 改为中英对照；新增 `.gitattributes`、补齐 `.gitignore`。
+- 发布 CI 收紧：统一 `npm ci --ignore-scripts` 并缓存 npm，tag 必须指向 `main` 上的提交；发布拆成检查、npm、GitHub release 三个 job，只有不跑测试的那个持有仓库写权限。
+
 ## 0.1.4 - 2026-09-25
 
 ### 变更
 
-- 声明对宿主的兼容性：`peerDependencies` 与 `engines.dsh` 都要求 `>=0.1.5-rc.1`，peer 标 optional 以免 npm 去装宿主。宿主启动预检不满足时会禁用本插件，此前没有声明就无从判断。
-- 依赖改为宿主提供：`dsh-llm` / `dsh-shell` / `dsh-subprocess` / `dsh-timeout` / `dsh-tools` / `schemastery` 从 `dependencies` 移到 `peerDependencies`（范围 `>=0.1.5-0`，标 optional），具体版本进 `devDependencies`。作为依赖时插件会自带一份，宿主升级后解析到的仍是旧一代副本。
+- 声明对宿主的兼容性：`peerDependencies` 与 `engines.dsh` 都要求 `>=0.1.5-rc.1`，peer 标 optional 以免 npm 去装宿主。宿主启动预检据此决定是否禁用本插件。
+- 六个 `@deepseek-ai/*` 包与 `schemastery` 不再作为 `dependencies` 自带，改为宿主提供的 optional peer 加 devDependency。
 
 ## 0.1.3 - 2026-09-20
 
 ### 修复
 
-- 插件以默认导出挂载时缺少 `inject`：0.1.1 起根入口默认导出插件函数，而 dsh 只从这个默认导出读元数据，`inject` 仅作命名导出等于未声明上下文，整个 boot 直接失败（`cannot get property "systemPrompt" without inject`）。现在把 `inject` 挂到函数本身（`apply.inject = inject`）。
-- **0.1.1 与 0.1.2 装到机器上会让 dsh 无法启动**，请改用 0.1.3；0.1.0 不受影响，因为它没有默认导出。
-- `publish.yml` 的发版检查只断言过插件形状（默认导出为函数），新增的单测断言现在同时锁定 `inject` 随函数走，而发版检查会跑这套单测。
+- `inject` 现在挂在插件的默认导出上：dsh 从默认导出读元数据，缺它整个 boot 直接失败（`cannot get property "systemPrompt" without inject`）。
+- **0.1.1 与 0.1.2 装到机器上会让 dsh 无法启动**，请改用 0.1.3；0.1.0 不受影响。
 
 ## 0.1.2 - 2026-09-20
 
 ### 修复
 
-- `ProgramFiles` 缺失时的 Git Bash 发现回退写成了 `"C:\Program Files"`（单反斜杠）：JS 求值后是 `C:Program Files`，不是目录，于是这类宿主上六个候选路径全部失效、并报「找不到 Git for Windows」。已改为合法转义，并新增断言锁定组合后的候选路径与顺序。
+- 未设置 `ProgramFiles` 的宿主上，Git Bash 发现回退到合法的 Windows 路径，六个候选目录能正常解析。一例断言锁定组合后的候选路径与顺序。
 
 ### 变更
 
-- 模块文档不再用 `@module` 标签引用一个从未发布的包名：那个名字出现在本包源码里只会误导读者。
+- 模块文档不再用 `@module` 标签引用一个从未发布的包名。
 
 ## 0.1.1 - 2026-09-18
 
