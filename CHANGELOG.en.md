@@ -14,7 +14,7 @@ For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
 - Tests split into `test/unit/` (`npm test`, spawns nothing) and `test/e2e/` (`npm run test:e2e`, spawns real Git Bash), and a guard test rejects a test file that neither script would collect.
 - Tree termination gained unit negative cases, and the e2e check that a killed tree really died now asserts instead of warning, with one more case that verifies the host-exit cleanup against a real host process.
-- `docs:check` calls the `dsh-plugin-docs` bin that the `dsh-mini-utility-dock` devDependency provides, replacing the copy of that script kept in this repository.
+- `docs:check` still runs this repository's own `scripts/check-docs.mjs`, with no external dependency; the comparison is wider: per-section changelog item counts, the `Unreleased` section included, and a `--base` that degrades on an all-zero SHA instead of failing.
 - `RELEASING.md` describes the real flow: a `v*` tag triggers OIDC Trusted Publishing, and there is no manual `npm publish` step.
 
 ### Maintenance

@@ -14,7 +14,7 @@ Release notes 由对应版本段生成；最新版本在前。
 
 - 测试分成 `test/unit/`（`npm test`，不启动进程）与 `test/e2e/`（`npm run test:e2e`，启动真实 Git Bash），并有一例守卫拦住不被任何脚本收集的新文件。
 - 整树终止补上单元测试负例；e2e 里「孙进程没死」从只 `console.warn` 改成硬断言，并新增一例用真宿主进程验证退出清理。
-- `docs:check` 改为调用 devDependency `dsh-mini-utility-dock` 提供的 `dsh-plugin-docs`，本仓不再自带那份实现。
+- `docs:check` 仍由本仓自带的 `scripts/check-docs.mjs` 执行，不引入外部依赖；比较范围扩大：中英 CHANGELOG 逐小节条目数、`Unreleased` 也纳入、CI 的 `--base` 在全 0 SHA 下降级而非报错。
 - `RELEASING.md` 按真实流程重写：发布由 `v*` tag 触发 OIDC Trusted Publishing，没有手工 `npm publish` 那一步。
 
 ### 维护
