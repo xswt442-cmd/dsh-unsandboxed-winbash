@@ -19,6 +19,7 @@
 - `CHANGELOG.md` and `CHANGELOG.en.md` stay in step: the same sections, the same number of bullets, the same order.
 - One bullet per change — what changed and why it matters, in at most two short sentences — counting prose, not the inline code identifiers a bullet names (roughly 120 CJK characters or 240 letters of it, and a whole version section stays under about 900 CJK characters). A version section is published verbatim as the GitHub release notes, so its reader is someone installing this tool, not its historian.
 - No implementation narrative and no root-cause essay. "It used to do X, which was wrong because Y, so now Z" is one bullet about Z; the rest belongs in the commit message or a handoff note. A bullet that needs a subordinate clause to justify itself has one clause too many.
+- The same register as the README: state what ships, in the tool's own technical vocabulary. No conversational verbs ("the pin rises to", "this now compares it for real", "one call asks it all"), no quotation marks used for emphasis, and no colon-then-explanation flourish.
 - `Unreleased` records what a reader other than the author would notice. Deferred work and "X was left alone because it needs a product call" are handoff notes, not changelog entries — the DSH floor question in particular does not belong here.
 - Do not name another repository. The test is a reader who cloned only this one: a sentence that only parses if they also know what a sibling checkout does cannot be verified and adds nothing — state what this repository does.
 
