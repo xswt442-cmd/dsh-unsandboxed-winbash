@@ -2,7 +2,7 @@
 
 Releases are tag-driven. Develop and verify on `dev`, merge the release commit into `main`, tag it there. Only release-ready changes belong on `main`.
 
-`publish.yml` publishes: a `vX.Y.Z` tag triggers it, it verifies the tag, reruns every check, publishes to npm through Trusted Publishing (OIDC), and creates the GitHub release from `CHANGELOG.md`. Nothing is published by hand.
+`publish.yml` publishes: a `vX.Y.Z` tag triggers it, it verifies the tag, reruns every check, publishes to npm through Trusted Publishing (OIDC), and creates the GitHub release from `docs/CHANGELOG.md`. Nothing is published by hand.
 
 ## How the workflow splits its credentials
 
@@ -12,7 +12,7 @@ Three jobs. `GITHUB_TOKEN` is exported into every step of a job, so the split is
 | --- | --- | --- |
 | `checks` | `contents: read` | `npm ci --ignore-scripts`, then every check below on a Windows runner. |
 | `npm` | `contents: read`, `id-token: write` | `npm publish --provenance`. Installs nothing: this package declares no `prepare` or `prepack` script, so packing needs no dependency tree. Add one and this job has to install — and think about what runs there while holding a publish credential. |
-| `release` | `contents: write` | `scripts/release-notes.mjs` over `CHANGELOG.md`, then `gh release`. No install, no tests. |
+| `release` | `contents: write` | `scripts/release-notes.mjs` over `docs/CHANGELOG.md`, then `gh release`. No install, no tests. |
 
 `release` waits for `checks` but not for a successful npm publish, so a registry hiccup still leaves the version its notes, and an out-of-band first publish gets its release too.
 

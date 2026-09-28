@@ -1,20 +1,20 @@
 #!/usr/bin/env node
-// Bilingual structure check for the documentation pair this repository ships:
-// README.md against README.en.md, CHANGELOG.md against CHANGELOG.en.md.
+// Bilingual structure check for the documentation pairs this repository ships.
+// The pairs, their paths and their comparison shapes are declared in the `pairs`
+// constant below, so a document moving directories is an edit there.
 //
-// What it verifies, taking no file arguments (the four file names are fixed by
-// convention, not passed in):
+// What it verifies, taking no file arguments:
 //   * both READMEs share the same heading-level sequence and code-fence
-//     languages — content inside fences is exempt, since that is where
+//     languages; content inside fences is exempt, since that is where
 //     language-specific examples live;
-//   * both CHANGELOGs expose the same releases — the `Unreleased` section
-//     included, since that is where the newest edits land — with version, date,
+//   * both CHANGELOGs expose the same releases, the `Unreleased` section
+//     included since that is where the newest edits land, with version, date,
 //     per-section item counts, and section titles normalized through a bilingual
 //     category map (新增/Added, 修复/Fixed, ...);
-//   * with `--base <revision>`, both files of each pair changed together since
-//     that revision — a one-sided edit is a missing translation. An all-zero
+//   * with `--base <revision>`, both files of each declared pair changed together
+//     since that revision: a one-sided edit is a missing translation. An all-zero
 //     revision is the null OID, which is what `github.event.before` carries for a
-//     branch that was just created or force-pushed: there is no previous revision
+//     branch that was just created or force-pushed; there is no previous revision
 //     to diff against, so that one requirement is skipped with a note instead of
 //     dying inside `git diff`.
 //
@@ -114,10 +114,9 @@ function assertEqual(left, right, message) {
   }
 }
 
-const zhReadme = markdownShape('README.md')
-const enReadme = markdownShape('README.en.md')
-assertEqual(zhReadme, enReadme, 'README structure differs between languages')
-
+// The pairs this repository ships, with the shape each is compared by. Everything
+// below reads this list and nothing else, so a document can move or a new pair can
+// be added by editing these two entries.
 const normalizeLog = (file) => changelogShape(file).map((release) => ({
   version: release.version,
   date: release.date,
@@ -126,7 +125,15 @@ const normalizeLog = (file) => changelogShape(file).map((release) => ({
     items,
   })),
 }))
-assertEqual(normalizeLog('CHANGELOG.md'), normalizeLog('CHANGELOG.en.md'), 'CHANGELOG structure differs between languages')
+
+const pairs = [
+  { name: 'README', zh: 'README.md', en: 'README.en.md', shape: markdownShape },
+  { name: 'CHANGELOG', zh: 'docs/CHANGELOG.md', en: 'docs/CHANGELOG.en.md', shape: normalizeLog },
+]
+
+for (const pair of pairs) {
+  assertEqual(pair.shape(pair.zh), pair.shape(pair.en), `${pair.name} structure differs between languages`)
+}
 
 const baseIndex = process.argv.indexOf('--base')
 if (baseIndex !== -1) {
@@ -145,12 +152,9 @@ if (baseIndex !== -1) {
       .split(/\r?\n/)
       .filter(Boolean))
 
-    for (const [primary, translation] of [
-      ['README.md', 'README.en.md'],
-      ['CHANGELOG.md', 'CHANGELOG.en.md'],
-    ]) {
-      if (changed.has(primary) !== changed.has(translation)) {
-        throw new Error(`${primary} and ${translation} must change together`)
+    for (const pair of pairs) {
+      if (changed.has(pair.zh) !== changed.has(pair.en)) {
+        throw new Error(`${pair.zh} and ${pair.en} must change together`)
       }
     }
   }

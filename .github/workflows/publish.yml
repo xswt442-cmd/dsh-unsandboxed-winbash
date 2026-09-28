@@ -2,7 +2,7 @@ name: publish
 
 # A release bumps package.json and both changelogs, then tags the release commit as
 # vX.Y.Z. This workflow verifies that contract, publishes to npm with provenance, and
-# creates the GitHub release from CHANGELOG.md.
+# creates the GitHub release from docs/CHANGELOG.md.
 #
 # Runs on windows-latest throughout: the release checks run the end-to-end suite, and
 # that one spawns a real Git for Windows. A platform this plugin never loads on has no
