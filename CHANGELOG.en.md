@@ -7,20 +7,20 @@ For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
 ### Fixed
 
-- `winbash` argument validation checks types first: a non-string `command` / `description` now answers a validation error instead of a `TypeError`. The rejection paths, background execution included, have unit tests.
-- A host ended by Ctrl+C or Ctrl+Break (`SIGINT` / `SIGBREAK`) now reaps its Git Bash process trees first, and only while this plugin is that signal's sole listener. Windows has no signal to hand back, so the plugin ends the process itself.
+- Argument validation checks types first: a non-string `command` / `description` returns a validation error instead of a `TypeError`, and the `enableRunInBackground: false` refusal is covered by a unit test.
+- On `SIGINT` / `SIGBREAK` the plugin terminates its Git Bash process trees before exiting, and takes over only while it is that signal's sole listener; on Windows the process ends itself once the cleanup is done.
 
 ### Changed
 
-- Tests split into `test/unit/` (`npm test`, spawns nothing) and `test/e2e/` (`npm run test:e2e`, spawns real Git Bash), and a guard test rejects a test file that neither script would collect.
-- Tree termination gained unit negative cases, and the e2e check that a killed tree really died now asserts instead of warning, with one more case that verifies the host-exit cleanup against a real host process.
-- `docs:check` still runs this repository's own `scripts/check-docs.mjs`, with no external dependency; the comparison is wider: per-section changelog item counts, the `Unreleased` section included, and a `--base` that degrades on an all-zero SHA instead of failing.
-- `RELEASING.md` describes the real flow: a `v*` tag triggers OIDC Trusted Publishing, and there is no manual `npm publish` step.
+- Tests are split into `test/unit/` (`npm test`, spawns nothing) and `test/e2e/` (`npm run test:e2e`, spawns real Git Bash), with one check that rejects a test file collected by neither script.
+- The tree-termination unit cases cover a tree whose descendants survive, the e2e case asserts that a grandchild process is terminated with its tree, and one further case verifies exit cleanup against a real host process.
+- `docs:check` runs this repository's own `scripts/check-docs.mjs` with no external dependency; the comparison covers per-section item counts in both CHANGELOGs and the `Unreleased` section, and an all-zero `--base` skips the pair check.
+- `RELEASING.md` matches the actual flow: a `v*` tag triggers OIDC Trusted Publishing, and there is no manual `npm publish` step.
 
 ### Maintenance
 
-- The npm package no longer ships `RELEASING.md`; `homepage` and `bugs` are added, `description` is now bilingual, and `.gitattributes` and `.gitignore` are filled out.
-- Release CI tightened: `npm ci --ignore-scripts` with the npm cache, a tag must point at a commit on `main`, and publishing splits into checks, npm and release jobs so only the one that runs no tests holds repository write access.
+- The npm package excludes `RELEASING.md`; `package.json` adds `homepage` and `bugs` and a bilingual `description`; `.gitattributes` is added and `.gitignore` completed.
+- The publish CI uses `npm ci --ignore-scripts` with an npm cache, requires the tag to point at a commit on `main`, and splits into checks / npm / GitHub release jobs, only the one that runs no tests holding repository write access.
 
 ## 0.1.4 - 2026-09-25
 

@@ -7,20 +7,20 @@ Release notes 由对应版本段生成；最新版本在前。
 
 ### 修复
 
-- `winbash` 参数校验先判类型：非字符串的 `command` / `description` 现在回正常的校验错误，不再抛 `TypeError`。`enableRunInBackground: false` 的拒绝路径同样补上了单元测试。
-- 宿主被 Ctrl+C / Ctrl+Break（`SIGINT` / `SIGBREAK`）结束时会先清理 Git Bash 进程树，且只在本插件是该信号唯一监听者时接管。Windows 没有可交回的信号，清理后由插件自己结束进程。
+- 参数校验先判类型：非字符串的 `command` / `description` 返回校验错误，不再抛 `TypeError`；`enableRunInBackground: false` 的拒绝路径有单元测试覆盖。
+- 宿主收到 `SIGINT` / `SIGBREAK` 时，本插件先终止 Git Bash 进程树再退出，且仅在本插件是该信号唯一监听者时接管；Windows 上清理完成后由本进程结束自身。
 
 ### 变更
 
-- 测试分成 `test/unit/`（`npm test`，不启动进程）与 `test/e2e/`（`npm run test:e2e`，启动真实 Git Bash），并有一例守卫拦住不被任何脚本收集的新文件。
-- 整树终止补上单元测试负例；e2e 里「孙进程没死」从只 `console.warn` 改成硬断言，并新增一例用真宿主进程验证退出清理。
-- `docs:check` 仍由本仓自带的 `scripts/check-docs.mjs` 执行，不引入外部依赖；比较范围扩大：中英 CHANGELOG 逐小节条目数、`Unreleased` 也纳入、CI 的 `--base` 在全 0 SHA 下降级而非报错。
-- `RELEASING.md` 按真实流程重写：发布由 `v*` tag 触发 OIDC Trusted Publishing，没有手工 `npm publish` 那一步。
+- 测试分为 `test/unit/`（`npm test`，不启动进程）与 `test/e2e/`（`npm run test:e2e`，使用真实 Git Bash），并有一例检查拦住未被任何脚本收集的测试文件。
+- 整树终止的单元测试覆盖子孙未被终止的判定；e2e 断言孙进程随树终止，并新增一例以真实宿主进程验证退出清理。
+- `docs:check` 由本仓 `scripts/check-docs.mjs` 执行，无外部依赖；比较范围含中英 CHANGELOG 的小节条目数与 `Unreleased`，CI 的 `--base` 为全 0 SHA 时跳过成对检查。
+- `RELEASING.md` 与实际流程一致：发布由 `v*` tag 触发 OIDC Trusted Publishing，不含手工 `npm publish` 步骤。
 
 ### 维护
 
-- npm 包不再包含 `RELEASING.md`；补上 `homepage` 与 `bugs`，`description` 改为中英对照；新增 `.gitattributes`、补齐 `.gitignore`。
-- 发布 CI 收紧：统一 `npm ci --ignore-scripts` 并缓存 npm，tag 必须指向 `main` 上的提交；发布拆成检查、npm、GitHub release 三个 job，只有不跑测试的那个持有仓库写权限。
+- npm 包不含 `RELEASING.md`；`package.json` 补上 `homepage` 与 `bugs`，`description` 为中英对照；新增 `.gitattributes`，补齐 `.gitignore`。
+- 发布 CI 统一 `npm ci --ignore-scripts` 并缓存 npm，tag 必须指向 `main` 上的提交；发布拆为 checks / npm / GitHub release 三个 job，仅未运行测试的 job 持有仓库写权限。
 
 ## 0.1.4 - 2026-09-25
 
