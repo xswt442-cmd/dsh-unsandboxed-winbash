@@ -22,7 +22,7 @@
   "license": "MIT",
   "engines": {
     "node": ">=20",
-    "dsh": ">=0.1.5-rc.1"
+    "dsh": ">=0.1.5-rc.3"
   },
   "dependencies": {
     "@deepseek-ai/dsh-llm": "^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0 || ^0.2.0-0",
@@ -33,7 +33,7 @@
     "@deepseek-ai/schemastery": "^3.18.1"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh": ">=0.1.5-rc.1"
+    "@deepseek-ai/dsh": ">=0.1.5-rc.3"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh": {

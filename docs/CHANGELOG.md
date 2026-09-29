@@ -3,11 +3,15 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
-## Unreleased
+## 0.1.7 - 2026-09-29
 
 ### 修复
 
 - `@deepseek-ai/dsh-llm`、`dsh-shell`、`dsh-subprocess`、`dsh-timeout`、`dsh-tools` 的依赖范围加上 `^0.2.0-0`：宿主为 0.2 时安装本插件解析到同代组件，不再落到 0.1 代副本。
+
+### 变更
+
+- 最低支持 DSH 版本提高到 `0.1.5-rc.3`，README 徽章、`engines.dsh` 与 `peerDependencies` 三处同步。
 
 ### 维护
 
