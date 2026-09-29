@@ -15,7 +15,11 @@ Windows 上的 Git Bash（MSYS2）工具插件。它向会话新增一个 `winba
 
 ## 为什么需要它
 
-Windows 上 dsh 不提供任何 bash 工具：`@deepseek-ai/dsh-base` 在 `win32` 上同时禁用了 `dsh-bash-sandbox` 与 `dsh-tool-bash`。手工打开也无效，因为 Windows 沙箱装不下 MSYS2——受限 token 拒绝创建 MSYS 信号处理所需的命名管道。以下为 Windows 11 + dsh 0.1.5-rc.1 的沙箱内实测：
+Windows 上的 dsh 不提供 bash 工具：`@deepseek-ai/dsh-base` 在 `win32` 上禁用了 `dsh-bash-sandbox` 与 `dsh-tool-bash`。
+
+Git Bash 也无法在 dsh 的文件沙箱内启动。受限 token 会拒绝 MSYS 创建信号处理所需的命名管道。
+
+沙箱内的调用结果（Windows 11，dsh 0.1.5-rc.1）：
 
 | 尝试 | 结果 |
 | --- | --- |
@@ -25,14 +29,17 @@ Windows 上 dsh 不提供任何 bash 工具：`@deepseek-ai/dsh-base` 在 `win32
 
 ## 功能
 
-- 新增 `winbash` 工具：以 `bash -c` 执行命令，返回 stdout、stderr 与退出码；非零退出按结果上报，不作为工具错误。
-- Git Bash 自动发现：`usr\bin\bash.exe`（真实 MSYS2）优先于 `bin\bash.exe` 包装器，按 Git for Windows 的常见安装位置查找；`bashPath` 可显式指定。
-- PATH 修复：把 Git 的 `usr\bin`、`mingw64\bin`、`cmd` 前置。Windows 的 `PATH` 通常只有 `Git\cmd`，不前置时 `ls`、`grep`、`sed`、`awk`、`find`、`sleep`、`wc` 全部 `command not found`。
-- 有界输出：保留 `maxOutputBytes` 窗口，超出部分写入 spill 文件并在结果里给出路径；多字节边界不会被截断成乱码。
-- 环境擦除：复用 `@deepseek-ai/dsh-subprocess` 的 `scrubbedParentEnv`，只转发 `dshEnv` 与 Git 需要的变量。
-- 超时与中断：deadline 到期或调用被中止时按整树终止（`taskkill /T /F`）。Windows 上子进程被杀后 stdio 管道不保证关闭，因此在 `exit` 上结算，并用 `drainMs` 有界排空。
-- 后台任务：`run_in_background` 走宿主的 `ctx.jobs` 注册表，可增量读取输出。
-- 命令内部一律显式调用 Git Bash，不用裸 `bash`：Windows 上它解析到 WSL shim，是另一个 shell。
+- 新增 `winbash` 工具：以 `bash -c` 执行命令，返回 stdout、stderr 与退出码。
+- 非零退出码作为命令结果返回，工具调用本身不失败。
+- Git Bash 只按 Git for Windows 的常见安装位置发现，不查询 PATH。
+- 把 Git 的 `usr\bin`、`mingw64\bin`、`cmd` 目录前置到子进程 PATH。
+- 结果保留输出末尾约 `maxOutputBytes` 字节，超出的部分写入 spill 文件并在结果里给出路径。
+- 截断按字符边界进行，多字节字符不会被切成乱码。
+- 子进程环境经 `@deepseek-ai/dsh-subprocess` 的 `scrubbedParentEnv` 擦除。
+- deadline 到期或调用被中止时按整棵进程树终止（`taskkill /T /F`）。
+- 一次运行在子进程的 `exit` 事件上结算，输出继续排空至多 `drainMs` 毫秒。
+- 子进程以隐藏窗口方式启动，不弹出控制台窗口。
+- `run_in_background: true` 经宿主的 `ctx.jobs` 注册任务，输出可增量读取。
 
 ## 安装
 
@@ -47,7 +54,9 @@ npm install dsh-unsandboxed-winbash
 dsh plugin --profile web add github:xswt442-cmd/dsh-unsandboxed-winbash
 ```
 
-包内声明了 `dsh.bundle`，bundle 补丁自行挂载工具行，无需手工改 `cordis.patch.yml`。安装后重启 DSH Web 生效。
+包内声明 `dsh.bundle`，工具行由 bundle 补丁挂载，不需要修改 `cordis.patch.yml`。
+
+安装后重启 DSH Web 生效。
 
 ## 配置
 
@@ -60,6 +69,7 @@ dsh plugin --profile web add github:xswt442-cmd/dsh-unsandboxed-winbash
         gitPathPrefix: true   # 把 Git 的 usr\bin / mingw64\bin / cmd 前置到 PATH
         extraPath: ''         # 额外 PATH 前缀，';' 分隔（排在最前）
         drainMs: 250          # 子进程退出后等待输出排空的上限
+        graceMs: 3000         # 整棵进程树终止后升级为 SIGKILL 的宽限
         timeoutMs: 120000     # 命令默认超时
         maxTimeoutMs: 600000
         maxOutputBytes: 64000
@@ -67,15 +77,31 @@ dsh plugin --profile web add github:xswt442-cmd/dsh-unsandboxed-winbash
         enableRunInBackground: true
 ```
 
-Git Bash 自动发现顺序：`%ProgramFiles%\Git\usr\bin\bash.exe` → `%ProgramFiles%\Git\bin\bash.exe` → `%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe` → `%ProgramFiles(x86)%\Git\...`。找不到且未配置 `bashPath` 时，只在调用 `winbash` 时报错，挂载本身不失败。
+Git Bash 的自动发现顺序：
+
+| 顺序 | 路径 |
+| --- | --- |
+| 1 | `%ProgramFiles%\Git\usr\bin\bash.exe` |
+| 2 | `%ProgramFiles%\Git\bin\bash.exe` |
+| 3 | `%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe` |
+| 4 | `%LOCALAPPDATA%\Programs\Git\bin\bash.exe` |
+| 5 | `%ProgramFiles(x86)%\Git\usr\bin\bash.exe` |
+| 6 | `%ProgramFiles(x86)%\Git\bin\bash.exe` |
+
+显式配置的 `bashPath` 优先于发现结果。
+
+未发现 Git Bash 且未配置 `bashPath` 时，报错出现在 `winbash` 的调用上。插件挂载不受影响。
 
 ## 安全与边界
 
-- 命令在文件沙箱之外执行：MSYS 无法在 ACL 受限 token 下启动，这是本插件存在的前提。工具描述里写明，且不提供 `sandbox_permissions` 升级面——没有可升级的起点。
-- 不替换任何服务，只新增一个工具：`pwsh`、权限预设、`/permission` 命令与 `fs` 工具仍受各自的沙箱与审批策略约束。
+- 命令在文件沙箱之外执行，破坏性命令同样不受限制。
+- 工具描述写明这一边界，注册的参数列表中没有 `sandbox_permissions`。
+- 本插件不替换任何服务，只新增一个工具。
+- `pwsh`、权限预设、`/permission` 命令与 `fs` 工具仍受各自的沙箱与审批策略约束。
 - 需要受限、可审计的文件改动请用 `fs` 工具。
-- 命令内的凭证类环境变量（`*KEY*`、`*TOKEN*`、`*SECRET*`、`*PASSWORD*`）不传给子进程；`dshEnv` 与 Git 需要的变量除外。
-- 超时或被中止时按整树终止；后台任务在宿主退出时同步清理进程树。
+- 名字含 `KEY`、`PASSWORD`、`SECRET`、`TOKEN` 的环境变量与全部父进程 `DSH_*` 变量都不传给子进程；子进程收到的是 `dshEnv` 提供的 `DSH_*` 事实与 Git 运行所需的变量。
+- 超时或被中止时按整棵进程树终止。
+- 后台任务在宿主退出时同步清理进程树。
 
 ## 平台与兼容性
 
@@ -86,15 +112,15 @@ Git Bash 自动发现顺序：`%ProgramFiles%\Git\usr\bin\bash.exe` → `%Progra
 | Node.js | `>=20` |
 | 依赖 | Git for Windows（提供 Git Bash） |
 
-其他平台不需要本插件：`dsh-tool-bash` 与 `dsh-bash-sandbox` 在非 `win32` 上默认启用。
+其他平台不需要本插件。`dsh-tool-bash` 与 `dsh-bash-sandbox` 在非 `win32` 平台默认启用。
 
 ## 开发与验证
 
-`test/e2e/` 会启动真实 Git Bash 并写 spill 文件，必须在非沙箱 shell 中运行；`test/unit/` 不启动任何进程，沙箱内亦可，`test/unit/layout.test.mjs` 守住这个分层。修改后运行：
+修改后运行：
 
 ```powershell
-npm test          # 纯单元，沙箱内亦可
-npm run test:e2e  # 需要非沙箱 shell
+npm test          # 纯单元，不启动进程，沙箱内亦可
+npm run test:e2e  # 启动真实 Git Bash，需要非沙箱 shell
 npm run docs:check
 npm pack --dry-run
 ```

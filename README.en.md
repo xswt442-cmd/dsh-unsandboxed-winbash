@@ -15,7 +15,11 @@ A Git Bash (MSYS2) tool plugin for Windows. It adds one `winbash` tool that runs
 
 ## Why this exists
 
-dsh ships no bash tool on Windows at all: `@deepseek-ai/dsh-base` disables both `dsh-bash-sandbox` and `dsh-tool-bash` on `win32`. Enabling them by hand does not help either, because the Windows sandbox cannot host MSYS2: the restricted token refuses the named pipe MSYS needs for signal handling. Measured inside a sandboxed tool call on Windows 11 with dsh 0.1.5-rc.1:
+dsh on Windows ships no bash tool: `@deepseek-ai/dsh-base` disables `dsh-bash-sandbox` and `dsh-tool-bash` on `win32`.
+
+Git Bash does not start inside the dsh file sandbox either. The restricted token refuses the named pipe MSYS creates for signal handling.
+
+Results of calls made inside a sandbox (Windows 11, dsh 0.1.5-rc.1):
 
 | Attempt | Result |
 | --- | --- |
@@ -25,14 +29,17 @@ dsh ships no bash tool on Windows at all: `@deepseek-ai/dsh-base` disables both 
 
 ## Features
 
-- Adds the `winbash` tool: runs a command through `bash -c` and returns stdout, stderr and the exit code. A non-zero exit is reported as a result, not as a tool error.
-- Git Bash auto-discovery: `usr\bin\bash.exe` (the real MSYS2) before the `bin\bash.exe` wrapper, searched across the well-known Git for Windows install locations; `bashPath` overrides it.
-- PATH repair: Git's `usr\bin`, `mingw64\bin` and `cmd` are prepended. A Windows `PATH` normally carries only `Git\cmd`, so without this `ls`, `grep`, `sed`, `awk`, `find`, `sleep` and `wc` are all `command not found`.
-- Bounded output: a `maxOutputBytes` window is retained, the rest goes to a spill file whose path is reported, and multi-byte boundaries are never cut into replacement characters.
-- Environment scrubbing: reuses `scrubbedParentEnv` from `@deepseek-ai/dsh-subprocess`, forwarding only `dshEnv` and what Git needs.
-- Timeout and abort: a deadline or an abort terminates the whole tree (`taskkill /T /F`). On Windows a killed child does not guarantee its stdio pipes close, so the run settles on `exit` and drains output for a bounded `drainMs`.
-- Background tasks: `run_in_background` registers with the host `ctx.jobs` and supports incremental reads.
-- Every command calls Git Bash explicitly, never a bare `bash`: on Windows that resolves to the WSL shim, which is a different shell.
+- Adds the `winbash` tool: a command runs through `bash -c`, and stdout, stderr and the exit code are returned.
+- A non-zero exit code is returned as the command's result, and the tool call itself does not fail.
+- Git Bash is discovered only in the well-known Git for Windows install locations, never through PATH.
+- Git's `usr\bin`, `mingw64\bin` and `cmd` directories are prepended to the child PATH.
+- The result keeps roughly the last `maxOutputBytes` bytes of output, and anything beyond that goes to a spill file whose path the result reports.
+- Truncation happens at character boundaries, so a multi-byte character is never cut into a replacement character.
+- The child environment is scrubbed by `scrubbedParentEnv` from `@deepseek-ai/dsh-subprocess`.
+- A deadline or an abort terminates the whole process tree (`taskkill /T /F`).
+- A run settles on the child's `exit` event, and output keeps draining for at most `drainMs` milliseconds.
+- The child is spawned with a hidden window, so no console window appears.
+- `run_in_background: true` registers the run with the host `ctx.jobs` and allows incremental reads.
 
 ## Install
 
@@ -47,7 +54,9 @@ npm install dsh-unsandboxed-winbash
 dsh plugin --profile web add github:xswt442-cmd/dsh-unsandboxed-winbash
 ```
 
-The package declares `dsh.bundle`, so the bundle patch mounts the tool row itself and no hand-edited `cordis.patch.yml` is needed. Restart DSH Web after installing.
+The package declares `dsh.bundle`, so the bundle patch mounts the tool row itself and no `cordis.patch.yml` edit is needed.
+
+Restart DSH Web after installing.
 
 ## Configuration
 
@@ -60,6 +69,7 @@ The package declares `dsh.bundle`, so the bundle patch mounts the tool row itsel
         gitPathPrefix: true   # prepend Git's usr\bin / mingw64\bin / cmd to PATH
         extraPath: ''         # extra PATH prefix, ';'-separated, placed first
         drainMs: 250          # bounded wait for output after the child exits
+        graceMs: 3000         # grace before a whole-tree kill escalates to SIGKILL
         timeoutMs: 120000     # default command timeout
         maxTimeoutMs: 600000
         maxOutputBytes: 64000
@@ -67,15 +77,31 @@ The package declares `dsh.bundle`, so the bundle patch mounts the tool row itsel
         enableRunInBackground: true
 ```
 
-Auto-discovery order: `%ProgramFiles%\Git\usr\bin\bash.exe` → `%ProgramFiles%\Git\bin\bash.exe` → `%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe` → `%ProgramFiles(x86)%\Git\...`. When nothing is found and `bashPath` is unset, only a `winbash` call fails; mounting the plugin does not.
+Git Bash discovery order:
+
+| Order | Path |
+| --- | --- |
+| 1 | `%ProgramFiles%\Git\usr\bin\bash.exe` |
+| 2 | `%ProgramFiles%\Git\bin\bash.exe` |
+| 3 | `%LOCALAPPDATA%\Programs\Git\usr\bin\bash.exe` |
+| 4 | `%LOCALAPPDATA%\Programs\Git\bin\bash.exe` |
+| 5 | `%ProgramFiles(x86)%\Git\usr\bin\bash.exe` |
+| 6 | `%ProgramFiles(x86)%\Git\bin\bash.exe` |
+
+An explicit `bashPath` takes precedence over the discovery result.
+
+When nothing is found and `bashPath` is unset, the failure is reported by the `winbash` call. Mounting the plugin is unaffected.
 
 ## Safety and limits
 
-- The command runs outside the file sandbox: MSYS cannot start under an ACL-restricted token, which is why this plugin exists. The tool description states it, and no `sandbox_permissions` escalation surface is offered, because there is nothing to escalate from.
-- No service is replaced, only one tool added: `pwsh`, the permission presets, the `/permission` command and the `fs` tools keep the sandbox and approval policy they already had.
+- The command runs outside the file sandbox, and destructive commands are not confined either.
+- The tool description states this boundary, and the registered parameter list holds no `sandbox_permissions`.
+- No service is replaced: the plugin only adds one tool.
+- `pwsh`, the permission presets, the `/permission` command and the `fs` tools keep the sandbox and approval policy they already had.
 - Use the `fs` tools for file edits that need to stay confined and reviewable.
-- Credential-shaped environment variables (`*KEY*`, `*TOKEN*`, `*SECRET*`, `*PASSWORD*`) are not forwarded to the child; `dshEnv` and what Git needs are.
-- A timeout or abort terminates the whole tree; a background task cleans up its process tree when the host exits.
+- Environment variables whose name contains `KEY`, `PASSWORD`, `SECRET` or `TOKEN`, and every `DSH_*` variable of the parent, are not forwarded to the child; the child receives the `DSH_*` facts supplied by `dshEnv` and what Git needs.
+- A timeout or an abort terminates the whole process tree.
+- A background task cleans up its process tree when the host exits.
 
 ## Platform and compatibility
 
@@ -86,15 +112,15 @@ Auto-discovery order: `%ProgramFiles%\Git\usr\bin\bash.exe` → `%ProgramFiles%\
 | Node.js | `>=20` |
 | Dependency | Git for Windows (provides Git Bash) |
 
-No other platform needs this plugin: `dsh-tool-bash` and `dsh-bash-sandbox` are enabled by default off `win32`.
+No other platform needs this plugin. `dsh-tool-bash` and `dsh-bash-sandbox` are enabled by default off `win32`.
 
 ## Development and verification
 
-`test/e2e/` starts real Git Bash and writes spill files, so it needs an unsandboxed shell; `test/unit/` never starts a process and runs inside the sandbox, and `test/unit/layout.test.mjs` is what keeps that split honest. After a change:
+After a change:
 
 ```powershell
-npm test          # pure units, also inside the sandbox
-npm run test:e2e  # needs an unsandboxed shell
+npm test          # pure units, no process spawned, fine inside the sandbox
+npm run test:e2e  # spawns real Git Bash, needs an unsandboxed shell
 npm run docs:check
 npm pack --dry-run
 ```
