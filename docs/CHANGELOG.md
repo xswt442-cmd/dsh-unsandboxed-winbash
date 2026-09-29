@@ -3,6 +3,16 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## Unreleased
+
+### 修复
+
+- `@deepseek-ai/dsh-llm`、`dsh-shell`、`dsh-subprocess`、`dsh-timeout`、`dsh-tools` 的依赖范围加上 `^0.2.0-0`：宿主为 0.2 时安装本插件解析到同代组件，不再落到 0.1 代副本。
+
+### 维护
+
+- 锁文件解析到 `0.2.0-rc.2`，`npm test` 与 `npm run test:e2e` 在该代依赖上通过；ci 新增一格在 `@0.1.5-rc.1` 与 `@0.2.0-rc.1` 宿主上把本 bundle 注册进临时 profile 并启动到 shell 应答 200。
+
 ## 0.1.6 - 2026-09-29
 
 ### 变更
