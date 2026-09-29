@@ -161,8 +161,11 @@ jobs:
               if (-not $shell) { Start-Sleep -Seconds 1 }
             }
             if (-not $shell) { throw "the web shell never answered 200`nstdout:`n$(Show-DshLog $outFile)`nstderr:`n$(Show-DshLog $errFile)`n" }
-            $stderr = if (Test-Path $errFile) { [string](Get-Content $errFile -Raw) } else { '' }
-            if ($stderr.Trim()) { throw "the host wrote to stderr with the bundle registered:`n$stderr" }
+            # An empty redirected file yields no output at all rather than an empty
+            # string, so the content is tested through IsNullOrWhiteSpace instead
+            # of a method call that would run on nothing.
+            $stderrText = if (Test-Path $errFile) { Get-Content $errFile -Raw } else { $null }
+            if (-not [string]::IsNullOrWhiteSpace($stderrText)) { throw "the host wrote to stderr with the bundle registered:`n$stderrText" }
             Write-Host "host booted and served the shell with dsh-unsandboxed-winbash registered"
           } finally {
             if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force }
