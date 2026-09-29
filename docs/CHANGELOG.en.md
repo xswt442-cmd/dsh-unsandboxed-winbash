@@ -3,6 +3,20 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.1.7 - 2026-09-29
+
+### Fixed
+
+- The `@deepseek-ai/dsh-llm`, `dsh-shell`, `dsh-subprocess`, `dsh-timeout` and `dsh-tools` dependency ranges add `^0.2.0-0`, so installing this plugin on a 0.2 host resolves the host's own generation instead of a 0.1 one.
+
+### Changed
+
+- The lowest supported DSH version becomes `0.1.5-rc.3`, in the README badge, `engines.dsh` and `peerDependencies` together.
+
+### Maintenance
+
+- The lockfile resolves to `0.2.0-rc.2` and both test layers pass against it; ci gains a job that registers this bundle in a temporary profile and boots `@0.1.5-rc.3` and `@0.2.0-rc.1` hosts until the shell answers 200.
+
 ## 0.1.6 - 2026-09-29
 
 ### Changed
