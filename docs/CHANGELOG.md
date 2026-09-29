@@ -11,7 +11,7 @@ Release notes 由对应版本段生成；最新版本在前。
 
 ### 维护
 
-- 锁文件解析到 `0.2.0-rc.2`，`npm test` 与 `npm run test:e2e` 在该代依赖上通过；ci 新增一格在 `@0.1.5-rc.1` 与 `@0.2.0-rc.1` 宿主上把本 bundle 注册进临时 profile 并启动到 shell 应答 200。
+- 锁文件解析到 `0.2.0-rc.2`，`npm test` 与 `npm run test:e2e` 在该代依赖上通过；ci 新增一格把本 bundle 注册进临时 profile，在 `@0.1.5-rc.3` 与 `@0.2.0-rc.1` 宿主上启动到 shell 应答 200。
 
 ## 0.1.6 - 2026-09-29
 

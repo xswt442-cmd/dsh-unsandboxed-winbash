@@ -11,7 +11,7 @@ For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
 ### Maintenance
 
-- The lockfile resolves to `0.2.0-rc.2` and both test layers pass against it; ci gains a job that registers this bundle in a temporary profile and boots the host on `@0.1.5-rc.1` and `@0.2.0-rc.1` until the shell answers 200.
+- The lockfile resolves to `0.2.0-rc.2` and both test layers pass against it; ci gains a job that registers this bundle in a temporary profile and boots `@0.1.5-rc.3` and `@0.2.0-rc.1` hosts until the shell answers 200.
 
 ## 0.1.6 - 2026-09-29
 

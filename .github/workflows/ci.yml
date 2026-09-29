@@ -60,11 +60,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The floor the package promises and the newest host line. A range that
-        # excludes a host generation is not caught by `npm test`: it shows up as
-        # the plugin loading a stale copy of the harness pieces, so the versions
-        # named here are also the versions the dependency ranges must cover.
-        dsh-spec: ['@0.1.5-rc.1', '@0.2.0-rc.1']
+        # A range that excludes a host generation is not caught by `npm test`: it
+        # shows up as the plugin loading a stale copy of the harness pieces, so the
+        # host line named here is the line the ranges must cover. `@0.1.5-rc.1` is
+        # not usable as an anchor: that host's profile asks for
+        # `@deepseek-ai/dsh-sandbox-local`, which no longer installs, so its boot
+        # fails before this repository's bundle is read.
+        dsh-spec: ['@0.1.5-rc.3', '@0.2.0-rc.1']
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -159,7 +161,7 @@ jobs:
               if (-not $shell) { Start-Sleep -Seconds 1 }
             }
             if (-not $shell) { throw "the web shell never answered 200`nstdout:`n$(Show-DshLog $outFile)`nstderr:`n$(Show-DshLog $errFile)`n" }
-            $stderr = if (Test-Path $errFile) { (Get-Content $errFile -Raw) } else { '' }
+            $stderr = if (Test-Path $errFile) { [string](Get-Content $errFile -Raw) } else { '' }
             if ($stderr.Trim()) { throw "the host wrote to stderr with the bundle registered:`n$stderr" }
             Write-Host "host booted and served the shell with dsh-unsandboxed-winbash registered"
           } finally {
