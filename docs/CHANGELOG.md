@@ -3,6 +3,16 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## 0.2.0 - 2026-10-24
+
+### 变更
+
+- 宿主的 `@deepseek-ai/dsh-llm`、`dsh-shell`、`dsh-subprocess`、`dsh-timeout`、`dsh-tools` 由普通依赖改为可选 peer 依赖，本插件改为从**正在运行的 dsh 自己的依赖树**解析它们（新增 `lib/core.js`）。这些包彼此以**精确版本**约束（形如 `"@deepseek-ai/dsh-agent": "0.2.1-rc.2"`，没有 `^` 也没有 `~`），所以 profile 里的副本只要与运行时不是逐字同一个版本，dsh 就会停用 `tools` 这一行，随后十几个等着 `tools` 的插件（包括标为 required 的 agent-loop）全部卡住，profile 启动失败。0.1.7 把范围放宽到 `^0.2.0-0` 只能让副本落在同一代，仍然会与运行时的具体版本错开。改为从运行时解析后 profile 不再安装副本，这份版本契约从 profile 里彻底移除：dsh 升级后不需要再同步任何版本号。
+
+### 维护
+
+- 五个 core 包转为 `devDependencies`，仅供测试解析使用（CI 上没有运行中的 dsh）；`npm test` 在「有 dsh」与「`DSH_HOME` 指向不存在的目录」两种环境下均通过。
+
 ## 0.1.7 - 2026-09-29
 
 ### 修复
