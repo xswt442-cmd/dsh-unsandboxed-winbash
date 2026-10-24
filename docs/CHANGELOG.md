@@ -3,6 +3,16 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## 0.4.0 - 2026-10-24
+
+### 修复
+
+- **不再向 profile 安装宿主的 core 包**，这些辅助函数改由 `lib/tool/kit.js` 自带实现。profile 里出现第二份 `@deepseek-ai/dsh-tools` 会让 dsh 自己的工具调度失效：宿主用普通 `Symbol()` 作 scheduler 的键，两个模块实例的 symbol 不同，PTC 模式下每次工具调用都报 `Cannot read properties of undefined (reading 'prepare')` —— 表现是**所有**工具都坏，不只本插件。此前两版（0.2.0 改从运行时解析、0.2.1 回退）都没修好，因为两者都仍在 profile 里留了副本。
+
+### 变更
+
+- `dependencies` 只剩 `@deepseek-ai/schemastery`。`defineTool`、`HarnessError`、`parseExitStatus`、`clampTimeout`、`deadline`、`timeoutOf`、`scrubbedParentEnv` 与 `TOOL_ABORTED` 由 `lib/tool/kit.js` 提供，行为与原版一致，参数校验的错误措辞也逐字保持（模型读的是这些字符串）。
+
 ## 0.3.0 - 2026-10-24
 
 ### 变更

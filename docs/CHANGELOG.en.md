@@ -3,6 +3,16 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.4.0 - 2026-10-24
+
+### Fixed
+
+- **No longer installs the host's core packages into the profile**; those helpers are now implemented in `lib/tool/kit.js`. A second copy of `@deepseek-ai/dsh-tools` in the profile disables dsh's own tool scheduling: the host keys its scheduler by a plain `Symbol()`, two module instances carry different symbols, and under PTC mode every tool call fails with `Cannot read properties of undefined (reading 'prepare')` — **all** tools break, not just this one. The two earlier attempts (0.2.0 resolving from the runtime, 0.2.1 reverting) both left a copy in the profile, so neither fixed it.
+
+### Changed
+
+- `dependencies` now holds only `@deepseek-ai/schemastery`. `defineTool`, `HarnessError`, `parseExitStatus`, `clampTimeout`, `deadline`, `timeoutOf`, `scrubbedParentEnv` and `TOOL_ABORTED` come from `lib/tool/kit.js`, behaviour-compatible with the originals — including the exact wording of argument-validation messages, which the model reads.
+
 ## 0.3.0 - 2026-10-24
 
 ### Changed

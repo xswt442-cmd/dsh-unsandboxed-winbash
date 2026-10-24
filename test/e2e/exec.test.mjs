@@ -15,7 +15,7 @@ import { spawn, spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { deadline, timeoutOf } from '@deepseek-ai/dsh-timeout'
+import { deadline, timeoutOf } from '../../lib/tool/kit.js'
 import { resolveGitBashPath, runBash, spawnBash, startBash } from '../../lib/tool/exec.js'
 
 // Git Bash is discovered by the plugin's own resolver, and DSH_TEST_BASH overrides
