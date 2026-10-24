@@ -3,15 +3,15 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
-## 0.2.0 - 2026-10-24
+## 0.2.1 - 2026-10-24
+
+### Fixed
+
+- Reverted 0.2.0's "resolve the core packages from the running dsh". That approach **split the module instances**: every winbash call failed with `Cannot read properties of undefined (reading 'prepare')`. The cause is that `@deepseek-ai/dsh-tools` keys its tool registry by `Symbol("@deepseek-ai/dsh-tools.scheduler")`, and a plain `Symbol()` is unique per module instance — a copy loaded from somewhere else carries its own symbol, so looking up the scheduler in dsh's registry always comes back undefined. The core packages go back to ordinary dependencies installed into the profile, sharing one instance with dsh; their versions stay pinned by the profile's `overrides`.
 
 ### Changed
 
-- The host's `@deepseek-ai/dsh-llm`, `dsh-shell`, `dsh-subprocess`, `dsh-timeout` and `dsh-tools` move from ordinary dependencies to optional peer dependencies, and this plugin now resolves them from **the dependency tree of the running dsh itself** (new `lib/core.js`). Those packages pin each other with **exact** versions — `"@deepseek-ai/dsh-agent": "0.2.1-rc.2"`, no caret, no tilde — so a copy in the profile that is not character-for-character the runtime's version makes dsh disable the `tools` row, after which the dozen-odd plugins waiting on `tools` (the required agent loop among them) stall and the profile fails to boot. Widening the range to `^0.2.0-0` in 0.1.7 only landed the copy in the right generation; it still drifted from the runtime's actual version. Resolving from the runtime means no copy is installed into the profile at all, which removes the version contract from the profile entirely: nothing has to be re-synced after a dsh upgrade.
-
-### Maintenance
-
-- The five core packages become `devDependencies`, used only so tests can resolve them (there is no running dsh on CI); `npm test` passes both with a dsh present and with `DSH_HOME` pointed at a nonexistent directory.
+- `@deepseek-ai/dsh-llm`, `dsh-shell`, `dsh-subprocess`, `dsh-timeout` and `dsh-tools` return to `dependencies`, and the extra `devDependencies` kept only for tests are gone.
 
 ## 0.1.7 - 2026-09-29
 
