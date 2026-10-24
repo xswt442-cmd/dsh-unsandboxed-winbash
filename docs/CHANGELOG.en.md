@@ -3,6 +3,12 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.4.1 - 2026-10-24
+
+### Fixed
+
+- The `winbash` tool's output schema is now standard JSON Schema: required members move from a per-property `required: true` into an object-level `required: [...]`. 0.4.0's local `defineTool` converted only `parameters` and passed `output.schema` through untouched; dsh 0.2.1's `assertSupportedJsonSchema` rejects boolean `required` and `required` beside `oneOf`, so registration threw `JsonSchemaError` and the tool never appeared in a session.
+
 ## 0.4.0 - 2026-10-24
 
 ### Fixed

@@ -3,6 +3,12 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## 0.4.1 - 2026-10-24
+
+### 修复
+
+- `winbash` 的工具输出 schema 改为标准 JSON Schema：必填项从每个属性上的 `required: true` 收进对象级的 `required: [...]`。0.4.0 的本地 `defineTool` 只转换了 `parameters`，`output.schema` 原样透传；dsh 0.2.1 的 `assertSupportedJsonSchema` 不接受布尔 `required`，也不接受 `required` 与 `oneOf` 并列，注册时抛 `JsonSchemaError`，工具因此没有出现在会话里。
+
 ## 0.4.0 - 2026-10-24
 
 ### 修复
