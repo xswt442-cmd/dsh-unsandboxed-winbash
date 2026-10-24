@@ -60,13 +60,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # A range that excludes a host generation is not caught by `npm test`: it
-        # shows up as the plugin loading a stale copy of the harness pieces, so the
-        # host line named here is the line the ranges must cover. `@0.1.5-rc.1` is
-        # not usable as an anchor: that host's profile asks for
-        # `@deepseek-ai/dsh-sandbox-local`, which no longer installs, so its boot
-        # fails before this repository's bundle is read.
-        dsh-spec: ['@0.1.5-rc.3', '@0.2.0-rc.1']
+        # The floor named here must be a line this plugin actually boots on, and the
+        # core packages it depends on must resolve to that host's own version: a
+        # range that excludes a host generation shows up as the plugin loading a
+        # stale copy of the harness pieces, which `npm test` cannot see. `0.1.x` is
+        # gone from this matrix because the declared floor is `>=0.2.0-rc.1` now.
+        dsh-spec: ['@0.2.0-rc.1', '@0.2.1-rc.2']
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

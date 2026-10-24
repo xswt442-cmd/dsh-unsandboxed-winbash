@@ -3,6 +3,13 @@
 Release notes are generated from the matching version section; newest first.
 For Chinese, see [CHANGELOG.md](CHANGELOG.md).
 
+## 0.3.0 - 2026-10-24
+
+### Changed
+
+- The lowest supported DSH version becomes `0.2.0-rc.1`: `engines.dsh`, `peerDependencies`, the README badge and the version table move together, and the compatibility matrix no longer boots `0.1.x` hosts.
+- The five host core packages (`dsh-llm`, `dsh-shell`, `dsh-subprocess`, `dsh-timeout`, `dsh-tools`) narrow to `^0.2.0-0`. The previous range, `^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0 || ^0.2.0-0`, let pnpm resolve the profile's copy to the 0.1 generation — and that copy has to match the runtime exactly, or dsh disables the `tools` row.
+
 ## 0.2.1 - 2026-10-24
 
 ### Fixed

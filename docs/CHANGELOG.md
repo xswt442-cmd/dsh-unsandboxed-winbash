@@ -3,6 +3,13 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
+## 0.3.0 - 2026-10-24
+
+### 变更
+
+- 最低支持 DSH 版本提高到 `0.2.0-rc.1`：`engines.dsh`、`peerDependencies`、README 徽标与版本表同步，兼容矩阵不再启动 `0.1.x` 宿主。
+- 五个宿主 core 包（`dsh-llm`、`dsh-shell`、`dsh-subprocess`、`dsh-timeout`、`dsh-tools`）的依赖范围收窄为 `^0.2.0-0`。此前是 `^0.1.5-0 || ^0.1.6-0 || ^0.1.7-0 || ^0.2.0-0`，允许 pnpm 把 profile 里的副本解析到 0.1 代 —— 而副本必须与运行时同版本，代差会让 dsh 停用 `tools` 行。
+
 ## 0.2.1 - 2026-10-24
 
 ### 修复
