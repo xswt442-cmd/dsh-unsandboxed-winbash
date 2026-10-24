@@ -3,15 +3,15 @@
 Release notes 由对应版本段生成；最新版本在前。
 英文版见 [CHANGELOG.en.md](CHANGELOG.en.md)。
 
-## 0.2.0 - 2026-10-24
+## 0.2.1 - 2026-10-24
+
+### 修复
+
+- 回退 0.2.0 的「从正在运行的 dsh 解析 core 包」。那个做法会**分裂模块实例**：每次调用 winbash 都失败在 `Cannot read properties of undefined (reading 'prepare')`。原因是 `@deepseek-ai/dsh-tools` 以 `Symbol("@deepseek-ai/dsh-tools.scheduler")` 作为 tool registry 的键，而普通 `Symbol()` 在每个模块实例里都不相同——插件从另一处加载的副本拿自己的 symbol 去查 dsh 的 registry，永远取不到 scheduler。core 包恢复为普通依赖，装进 profile 与 dsh 共用同一实例；版本由 profile 的 `overrides` 钉住。
 
 ### 变更
 
-- 宿主的 `@deepseek-ai/dsh-llm`、`dsh-shell`、`dsh-subprocess`、`dsh-timeout`、`dsh-tools` 由普通依赖改为可选 peer 依赖，本插件改为从**正在运行的 dsh 自己的依赖树**解析它们（新增 `lib/core.js`）。这些包彼此以**精确版本**约束（形如 `"@deepseek-ai/dsh-agent": "0.2.1-rc.2"`，没有 `^` 也没有 `~`），所以 profile 里的副本只要与运行时不是逐字同一个版本，dsh 就会停用 `tools` 这一行，随后十几个等着 `tools` 的插件（包括标为 required 的 agent-loop）全部卡住，profile 启动失败。0.1.7 把范围放宽到 `^0.2.0-0` 只能让副本落在同一代，仍然会与运行时的具体版本错开。改为从运行时解析后 profile 不再安装副本，这份版本契约从 profile 里彻底移除：dsh 升级后不需要再同步任何版本号。
-
-### 维护
-
-- 五个 core 包转为 `devDependencies`，仅供测试解析使用（CI 上没有运行中的 dsh）；`npm test` 在「有 dsh」与「`DSH_HOME` 指向不存在的目录」两种环境下均通过。
+- `@deepseek-ai/dsh-llm`、`dsh-shell`、`dsh-subprocess`、`dsh-timeout`、`dsh-tools` 恢复为 `dependencies`，不再需要为了测试额外声明 `devDependencies`。
 
 ## 0.1.7 - 2026-09-29
 
