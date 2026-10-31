@@ -65,7 +65,7 @@ jobs:
         # range that excludes a host generation shows up as the plugin loading a
         # stale copy of the harness pieces, which `npm test` cannot see. `0.1.x` is
         # gone from this matrix because the declared floor is `>=0.2.0-rc.1` now.
-        dsh-spec: ['@0.2.0-rc.1', '@0.2.1-rc.2']
+        dsh-spec: ['@0.2.0-rc.1', '@0.2.1-rc.5']
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
