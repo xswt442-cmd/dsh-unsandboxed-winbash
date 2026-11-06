@@ -19,7 +19,7 @@ dsh on Windows ships no bash tool: `@deepseek-ai/dsh-base` disables `dsh-bash-sa
 
 Git Bash does not start inside the dsh file sandbox either. The restricted token refuses the named pipe MSYS creates for signal handling.
 
-Results of calls made inside a sandbox (Windows 11, dsh 0.1.5-rc.1):
+Results of calls made inside a sandbox (Windows 11, restricted token):
 
 | Attempt | Result |
 | --- | --- |

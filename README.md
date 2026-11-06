@@ -19,7 +19,7 @@ Windows 上的 dsh 不提供 bash 工具：`@deepseek-ai/dsh-base` 在 `win32` �
 
 Git Bash 也无法在 dsh 的文件沙箱内启动。受限 token 会拒绝 MSYS 创建信号处理所需的命名管道。
 
-沙箱内的调用结果（Windows 11，dsh 0.1.5-rc.1）：
+沙箱内的调用结果（Windows 11，受限 token）：
 
 | 尝试 | 结果 |
 | --- | --- |
