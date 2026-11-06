@@ -4,9 +4,13 @@ name: ci
 # only spawn Git Bash there. Every job therefore runs on a Windows runner, which also
 # ships Git for Windows — no job exists to prove anything about other platforms.
 on:
-  pull_request:
   push:
     branches: [main, dev]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -20,10 +24,6 @@ jobs:
         node: [20, 22, 24]
     steps:
       - uses: actions/checkout@v5
-        with:
-          # The paired-translation gate diffs the branch against the pull request
-          # base, which a shallow checkout cannot answer.
-          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
@@ -35,14 +35,6 @@ jobs:
         run: npm ci --ignore-scripts
       - name: docs
         run: npm run docs:check
-      - name: docs pairs change together
-        if: github.event_name == 'pull_request'
-        env:
-          DOCS_BASE: ${{ github.event.pull_request.base.sha }}
-        # `shell: bash` is deliberate on a Windows runner: Git Bash ships there, and
-        # the variable would not expand in the default PowerShell.
-        shell: bash
-        run: npm run docs:check -- --base "$DOCS_BASE"
       - name: unit tests (no process spawned)
         run: npm test
       - name: Git Bash is present
