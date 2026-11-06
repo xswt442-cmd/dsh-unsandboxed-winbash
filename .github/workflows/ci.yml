@@ -57,7 +57,7 @@ jobs:
         # declared in `engines.dsh`. The job installs that host, registers the bundle
         # in a temporary profile and starts it, which is the check `npm test` cannot
         # make: a plugin that fails to mount takes the boot down.
-        dsh-spec: ['@0.2.0-rc.1', '@0.2.1-rc.5']
+        dsh-spec: ['@0.2.0-rc.1', '@0.2.2-rc.1']
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
