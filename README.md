@@ -35,7 +35,7 @@ Git Bash 也无法在 dsh 的文件沙箱内启动。受限 token 会拒绝 MSYS
 - 把 Git 的 `usr\bin`、`mingw64\bin`、`cmd` 目录前置到子进程 PATH。
 - 结果保留输出末尾约 `maxOutputBytes` 字节，超出的部分写入 spill 文件并在结果里给出路径。
 - 截断按字符边界进行，多字节字符不会被切成乱码。
-- 子进程环境经 `@deepseek-ai/dsh-subprocess` 的 `scrubbedParentEnv` 擦除。
+- 子进程环境由 `lib/tool/kit.js` 的 `scrubbedParentEnv` 擦除。
 - deadline 到期或调用被中止时按整棵进程树终止（`taskkill /T /F`）。
 - 一次运行在子进程的 `exit` 事件上结算，输出继续排空至多 `drainMs` 毫秒。
 - 子进程以隐藏窗口方式启动，不弹出控制台窗口。

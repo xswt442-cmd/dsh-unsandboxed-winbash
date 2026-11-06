@@ -4,7 +4,7 @@ A release is a version bump on `main` plus a `vX.Y.Z` tag. Branch pushes publish
 
 ## Checklist
 
-1. On `dev`, set `X.Y.Z` in `package.json#version` and the code version constant, where this repository has one.
+1. On `dev`, set `X.Y.Z` in `package.json#version`.
 2. Write `## X.Y.Z - YYYY-MM-DD` as the first section of both changelogs, with the same sections, bullets, and order. `scripts/release-notes.mjs` reads that heading from `docs/CHANGELOG.md`, and the GitHub release uses the section verbatim.
 3. Run the checks in the Verify section of `AGENTS.md`, plus `npm pack --dry-run`.
 4. Commit on `dev`, push, and wait for the branch's CI to be green.

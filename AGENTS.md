@@ -27,7 +27,7 @@ Maintainers commit straight to `dev` and fast-forward `main`; CI still runs when
 npm test          # pure units; no process is spawned
 npm run test:e2e  # spawns Git Bash; needs an unsandboxed shell
 npm run docs:check
-for f in lib/index.js lib/tool/index.js lib/tool/exec.js; do node --check "$f"; done
+for f in lib/index.js lib/tool/index.js lib/tool/exec.js lib/tool/kit.js; do node --check "$f"; done
 npm pack --dry-run
 ```
 

@@ -35,7 +35,7 @@ Results of calls made inside a sandbox (Windows 11, dsh 0.1.5-rc.1):
 - Git's `usr\bin`, `mingw64\bin` and `cmd` directories are prepended to the child PATH.
 - The result keeps roughly the last `maxOutputBytes` bytes of output, and anything beyond that goes to a spill file whose path the result reports.
 - Truncation happens at character boundaries, so a multi-byte character is never cut into a replacement character.
-- The child environment is scrubbed by `scrubbedParentEnv` from `@deepseek-ai/dsh-subprocess`.
+- The child environment is scrubbed by `scrubbedParentEnv` from `lib/tool/kit.js`.
 - A deadline or an abort terminates the whole process tree (`taskkill /T /F`).
 - A run settles on the child's `exit` event, and output keeps draining for at most `drainMs` milliseconds.
 - The child is spawned with a hidden window, so no console window appears.

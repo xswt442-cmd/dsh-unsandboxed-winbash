@@ -1,10 +1,8 @@
-// The suite layout itself is a contract, and until now nothing enforced it:
-// `npm test` named one fixed file, so a test added anywhere else was simply never
-// run, and `AGENTS.md`'s promise that the unit layer spawns no process was
-// guarded by nothing.
+// The suite layout is a contract, and this file is the unit layer's meta-test that
+// holds it: `npm test` must collect the whole unit layer, `npm run test:e2e` the e2e
+// layer, and the unit layer must not spawn a process, as `AGENTS.md` states.
 //
-// This file is the unit layer's own meta-test, so it touches the file system and
-// nothing else.
+// It touches the file system and nothing else.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
@@ -56,13 +54,11 @@ test('both layers hold test files, and no collected file is named in a script', 
 })
 
 test('the test commands collect a whole layer, without a shell-dependent pattern', () => {
-  // `node --test <file>` was the old shape: it silently skipped every file that
-  // was not named on the command line. Naming the layer is right, but how matters:
-  // a glob in an npm script only works if the shell expands it (Git Bash does,
-  // cmd and PowerShell do not), a glob given to node needs test-runner glob
-  // support that postdates the `engines.node` floor, and a directory is treated
-  // as a file to execute. So a runner script enumerates the layer and the command
-  // line carries only fixed paths.
+  // How the layer is named matters: a glob in an npm script only works if the
+  // shell expands it (Git Bash does, cmd and PowerShell do not), a glob given to
+  // node needs test-runner glob support that postdates the `engines.node` floor,
+  // and a directory is treated as a file to execute. So a runner script enumerates
+  // the layer and the command line carries only fixed paths.
   assert.match(scripts.test, /run-layer\.mjs\s+test\/unit(\s|$)/, `npm test must collect the unit layer, got: ${scripts.test}`)
   assert.match(scripts['test:e2e'], /run-layer\.mjs\s+test\/e2e\b/, `test:e2e must collect the e2e layer, got: ${scripts['test:e2e']}`)
   for (const [name, script] of Object.entries(scripts)) {

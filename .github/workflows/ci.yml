@@ -53,11 +53,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The floor named here must be a line this plugin actually boots on, and the
-        # core packages it depends on must resolve to that host's own version: a
-        # range that excludes a host generation shows up as the plugin loading a
-        # stale copy of the harness pieces, which `npm test` cannot see. `0.1.x` is
-        # gone from this matrix because the declared floor is `>=0.2.0-rc.1` now.
+        # Each entry is a host generation this plugin boots on, at or above the floor
+        # declared in `engines.dsh`. The job installs that host, registers the bundle
+        # in a temporary profile and starts it, which is the check `npm test` cannot
+        # make: a plugin that fails to mount takes the boot down.
         dsh-spec: ['@0.2.0-rc.1', '@0.2.1-rc.5']
     steps:
       - uses: actions/checkout@v5

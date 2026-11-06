@@ -10,9 +10,6 @@
 // directory is not an option either: the runner treats a positional as a file to
 // execute. So the only form that behaves the same on every platform, shell and
 // supported node version is the one that names the files it found.
-//
-// Naming them one by one in package.json is what this replaces: `npm test` used
-// to name a single file, and any test added to the layer was silently never run.
 import { readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'

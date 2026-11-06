@@ -140,7 +140,7 @@ const EXEC_MODULE = new URL('../../lib/tool/exec.js', import.meta.url).href
 
 /**
  * The supervisor process that stands in for the host: one real winbash child, then an
- * exit, with the teardown hooks installed only when `WB_HOOK` says so.
+ * exit, with the teardown hooks installed.
  *
  * This is the half the unit layer cannot do: there the reaper is a recorder, so a
  * green test proves only which arguments the code chose. Here the reaper is the real
@@ -164,24 +164,17 @@ const config = {
 // exiting on its own, short enough that such a job clears itself off the machine.
 const handle = spawnBash({ bashPath: bash, command: '/usr/bin/sleep 60 & /usr/bin/sleep 60', dshEnv: {} }, config, undefined);
 process.stdout.write(JSON.stringify({ bash: handle.pid }) + '\\n');
-if (process.env.WB_HOOK === '1') installChildTeardown();
+installChildTeardown();
 setTimeout(() => process.exit(0), 400);
 `
 
-/**
- * Run the host fixture to completion and report the bash pid it was running.
- *
- * `withTeardown: false` reproduces the control behind the note in the test that uses
- * this: the same exit with no hook installed, which the suite does not assert on
- * because what it shows depends on the machine's own process containment.
- */
-function runHostFixture(withTeardown = true) {
+/** Run the host fixture to completion and report the bash pid it was running. */
+function runHostFixture() {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, ['--input-type=module', '-e', fixtureSource], {
       env: {
         ...process.env,
-        WB_BASH: BASH,
-        WB_HOOK: withTeardown ? '1' : '0'
+        WB_BASH: BASH
       },
       stdio: [
         'ignore',
@@ -292,14 +285,10 @@ test('end to end: commands run through Git Bash', async (t) => {
     // The reaper here is the real `taskkill` and the tree is a real bash with two
     // sleeps, so this is the measurement the unit layer's recorder cannot make: the
     // exit hook reaches the whole tree and the host still exits cleanly behind it.
-    //
-    // What this does NOT prove is that the hook is the only thing standing between a
-    // host exit and an orphan. The same fixture run with `installChildTeardown` left
-    // out was measured on a Windows host and the tree died anyway, because libuv
-    // assigns every non-detached child to its own kill-on-close Job Object. What that
-    // run also showed is the case the hook is for: a descendant outside the reach of
-    // that containment survives a host death, and only a whole-tree kill clears it.
-    const reaped = await runHostFixture(true)
+    // A direct child is contained by libuv's kill-on-close Job Object with or without
+    // the hook, so what this pins is the descendant case, where only the tree kill
+    // reaches the process.
+    const reaped = await runHostFixture()
     t.after(() => forceReap(reaped.bash))
     assert.ok(await waitForDeath(reaped.bash), `bash child ${reaped.bash} outlived a host that had the teardown hook`)
     const survivors = await survivingDescendantsOf(reaped.bash)

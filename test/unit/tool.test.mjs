@@ -116,9 +116,8 @@ test('the plugin default carries inject, which is where the loader reads it', ()
   // dsh reads a plugin's metadata off the value it applies, and with a default export
   // that value is the function, not the module namespace. `inject` left beside it as a
   // named export gives the loader an undeclared ctx.systemPrompt and fails the whole
-  // boot -- "cannot get property systemPrompt without inject" -- which is the
-  // regression 0.1.1 and 0.1.2 shipped. `publish.yml` runs this suite, so the guard
-  // gates a release.
+  // boot -- "cannot get property systemPrompt without inject". `publish.yml` runs this
+  // suite, so the guard gates a release.
   assert.equal(typeof pluginDefault, 'function', 'the default export is what the loader applies')
   assert.equal(pluginDefault, apply, 'the default export is the apply function')
   assert.deepEqual(inject, ['tools', 'systemPrompt', 'shellEnv'])
@@ -127,9 +126,9 @@ test('the plugin default carries inject, which is where the loader reads it', ()
 //#endregion
 //#region argument guard
 test('the argument guard checks the type before it touches the value', () => {
-  // The bug this pins: `args.command.trim()` on a number, an object or a missing
-  // property threw a TypeError out of the guard instead of returning a validation
-  // error, so the model got a stack trace where it should get a rule.
+  // The guard reads the type before it calls `.trim()`: a number, an object or a
+  // missing property has to come back as a validation error rather than a TypeError,
+  // which reaches the model as a stack trace in place of a rule.
   for (const bad of [
     {},
     void 0,
