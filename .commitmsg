@@ -1,0 +1,5 @@
+chore(skills): refresh myshuohua after the reference trim
+
+The checker now masks badge alt text and no longer flags 存进 inside
+幸存进程. Two term-casing warnings remain on purpose: bash and dsh are
+lowercase as commands, capitalised as product and shell names.
